@@ -2511,6 +2511,39 @@
                 loadBEOList();
             });
 
+            // --- FIX: Real-time Listener for Categories ---
+            const tenantIdStr = typeof CLIENT_CONFIG !== 'undefined' ? CLIENT_CONFIG.tenant.id : (typeof tenantId !== 'undefined' ? tenantId : 'klien_super_001');
+            
+            database.ref(tenantIdStr + '/categories').on('value', (snapshot) => {
+                // Determine the correct global array (window.categories, window.categoryData, or categories)
+                let tempCategories = [];
+                snapshot.forEach(child => {
+                    tempCategories.push({ id: child.key, ...child.val() });
+                });
+                
+                if (typeof window.categoryData !== 'undefined') window.categoryData = tempCategories;
+                else if (typeof categories !== 'undefined') categories = tempCategories;
+
+                // Re-render UI
+                if (typeof renderCategories === 'function') renderCategories();
+                if (typeof renderCategoryDropdown === 'function') renderCategoryDropdown();
+            });
+
+            // --- FIX: Real-time Listener for Menus ---
+            database.ref(tenantIdStr + '/menus').on('value', (snapshot) => {
+                let tempMenus = [];
+                snapshot.forEach(child => {
+                    tempMenus.push({ id: child.key, ...child.val() });
+                });
+                
+                if (typeof window.menuData !== 'undefined') window.menuData = tempMenus;
+                else if (typeof menus !== 'undefined') menus = tempMenus;
+
+                // Re-render UI
+                if (typeof renderMenuTable === 'function') renderMenuTable();
+                else if (typeof renderMenus === 'function') renderMenus();
+            });
+
             // 2. Listener BEO (Live)
             database.ref(tenantDb + '/beoList').on('value', (snapshot) => {
                 beoList = snapshot.val() || {};
@@ -5985,7 +6018,16 @@
             // SIMPAN KE FIREBASE
             database.ref(CLIENT_CONFIG.tenant.id + '/settings/menus').set(updatedMenus)
                 .then(() => {
-                    closeMenuModal();
+                    // 1. Reset the form
+                    const menuForm = document.getElementById('boMenuForm') || document.querySelector('form[onsubmit*="Menu"]');
+                    if(menuForm) menuForm.reset();
+                    
+                    // 2. Close the modal
+                    const menuModal = document.getElementById('boMenuModal') || document.getElementById('modalMenu');
+                    if(menuModal) menuModal.classList.add('hidden');
+                    
+                    // 3. Let the real-time listener (.on('value')) handle the UI update automatically.
+                    // DO NOT manually push to the array or call render functions here.
                     alert('✅ Menu berhasil disinkronkan ke Database!');
                 }).catch(e => alert('Error: ' + e.message));
         };
