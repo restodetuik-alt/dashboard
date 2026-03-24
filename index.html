@@ -1754,7 +1754,7 @@
             },
             watzap: {
                 apiKey: "BTLXFLVNNF6DQUEL",
-                numberKey: "fJgVRwThbhZvFvPM",
+                numberKey: "J4J9KHdFRI8v02S0",
                 baseUrl: "https://api.watzap.id/v1"
             }
         };
@@ -2522,11 +2522,9 @@
                 if (snapshot.exists()) areaDefinitions = snapshot.val();
                 if (typeof renderBackOfficeAreas === 'function') renderBackOfficeAreas();
                 if (typeof loadAreaDropdowns === 'function') loadAreaDropdowns();
-            });
 
-            database.ref(tenantDb + '/settings/menus').on('value', (snapshot) => {
-                if (snapshot.exists()) menuCategories = snapshot.val();
-                if (typeof renderBackOfficeMenus === 'function') renderBackOfficeMenus();
+                // --- FIX: Paksa update grid monitor dan tabel jika ada area baru ---
+                if (typeof updateDashboard === 'function') updateDashboard();
             });
 
             // 4. Listener Marketing & Finance (Live)
