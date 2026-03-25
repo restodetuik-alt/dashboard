@@ -1755,7 +1755,7 @@
             watzap: {
                 apiKey: "BTLXFLVNNF6DQUEL",
                 numberKey: "J4J9KHdFRI8v02S0",
-                baseUrl: "https://api.watzap.id/v1"
+                baseUrl: "https://api.watzap.id/v1/"
             }
         };
 
@@ -2513,14 +2513,14 @@
 
             // --- FIX: Real-time Listener for Categories ---
             const tenantIdStr = typeof CLIENT_CONFIG !== 'undefined' ? CLIENT_CONFIG.tenant.id : (typeof tenantId !== 'undefined' ? tenantId : 'klien_super_001');
-            
+
             database.ref(tenantIdStr + '/categories').on('value', (snapshot) => {
                 // Determine the correct global array (window.categories, window.categoryData, or categories)
                 let tempCategories = [];
                 snapshot.forEach(child => {
                     tempCategories.push({ id: child.key, ...child.val() });
                 });
-                
+
                 if (typeof window.categoryData !== 'undefined') window.categoryData = tempCategories;
                 else if (typeof categories !== 'undefined') categories = tempCategories;
 
@@ -2535,7 +2535,7 @@
                 snapshot.forEach(child => {
                     tempMenus.push({ id: child.key, ...child.val() });
                 });
-                
+
                 if (typeof window.menuData !== 'undefined') window.menuData = tempMenus;
                 else if (typeof menus !== 'undefined') menus = tempMenus;
 
@@ -6020,12 +6020,12 @@
                 .then(() => {
                     // 1. Reset the form
                     const menuForm = document.getElementById('boMenuForm') || document.querySelector('form[onsubmit*="Menu"]');
-                    if(menuForm) menuForm.reset();
-                    
+                    if (menuForm) menuForm.reset();
+
                     // 2. Close the modal
                     const menuModal = document.getElementById('boMenuModal') || document.getElementById('modalMenu');
-                    if(menuModal) menuModal.classList.add('hidden');
-                    
+                    if (menuModal) menuModal.classList.add('hidden');
+
                     // 3. Let the real-time listener (.on('value')) handle the UI update automatically.
                     // DO NOT manually push to the array or call render functions here.
                     alert('✅ Menu berhasil disinkronkan ke Database!');
