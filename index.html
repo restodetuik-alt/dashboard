@@ -346,6 +346,31 @@
             box-shadow: 0 40px 100px -30px rgba(6, 78, 59, 0.15);
             text-align: center;
         }
+
+        /* === INJEKSI: Responsive Helper & Density Scales === */
+        :root {
+            --base-font-size: 0.875rem; /* default sm */
+        }
+
+        body {
+            font-size: var(--base-font-size);
+            transition: font-size 0.2s ease-in-out;
+            padding-bottom: 60px; /* Ruang untuk Mobile Bottom Nav */
+        }
+
+        @media (min-width: 768px) {
+            body { padding-bottom: 0; }
+        }
+
+        /* UI Density Classes */
+        .density-compact { --base-font-size: 0.75rem; }  /* text-xs */
+        .density-normal { --base-font-size: 0.875rem; }   /* text-sm */
+        .density-large { --base-font-size: 1rem; }        /* text-base */
+
+        /* Utility: Hide non-essential columns on mobile */
+        @media (max-width: 1023px) {
+            .hide-on-mobile { display: none !important; }
+        }
     </style>
     <!-- Chosen Palette: Warm Stone & Amber (Warm neutrals background, Amber primary for hospitality feel, Red/Green for status) -->
     <!-- Application Structure Plan: 
@@ -606,6 +631,38 @@
                                 <span class="lang-check text-emerald-600 font-bold hidden">✓</span>
                             </button>
                         </div>
+                    </div>
+
+                    <!-- F. UI Density Control -->
+                    <div class="modern-card space-y-4 md:col-span-2 lg:col-span-1">
+                        <div class="flex items-center gap-3 border-b border-emerald-900/10 pb-4 mb-4">
+                            <span class="text-emerald-600 text-xl font-bold">📐</span>
+                            <h4 class="text-lg font-bold text-emerald-900">UI Density</h4>
+                        </div>
+                        <label class="block mb-4 text-sm font-bold text-stone-500 uppercase tracking-widest">Ukuran
+                            Tampilan Antarmuka</label>
+
+                        <div class="grid grid-cols-3 gap-3">
+                            <button onclick="setPreviewDensity('compact')" id="btnDensityCompact"
+                                class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-stone-50 transition-all hover:bg-stone-100 focus:outline-none gap-1">
+                                <span class="text-lg">◉</span>
+                                <span class="text-xs font-bold text-stone-600">Compact</span>
+                                <span class="text-[9px] text-stone-400">±12px</span>
+                            </button>
+                            <button onclick="setPreviewDensity('normal')" id="btnDensityNormal"
+                                class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-stone-50 transition-all hover:bg-stone-100 focus:outline-none gap-1">
+                                <span class="text-lg">◉</span>
+                                <span class="text-xs font-bold text-stone-600">Normal</span>
+                                <span class="text-[9px] text-stone-400">±14px</span>
+                            </button>
+                            <button onclick="setPreviewDensity('large')" id="btnDensityLarge"
+                                class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-stone-50 transition-all hover:bg-stone-100 focus:outline-none gap-1">
+                                <span class="text-lg">◉</span>
+                                <span class="text-xs font-bold text-stone-600">Large</span>
+                                <span class="text-[9px] text-stone-400">±16px</span>
+                            </button>
+                        </div>
+                        <p class="text-xs text-stone-400 mt-2">Mengatur ukuran teks dan jarak elemen antarmuka.</p>
                     </div>
                 </div>
 
@@ -1113,9 +1170,9 @@
                                 <tr>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">PIC / KONTAK</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">AREA / WAKTU</th>
-                                    <th class="table-th text-emerald-900/40 px-6 py-4">CAP / TYPE</th>
+                                    <th class="table-th text-emerald-900/40 px-6 py-4 hide-on-mobile">CAP / TYPE</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">STATUS</th>
-                                    <th class="table-th text-emerald-900/40 px-6 py-4">MENU</th>
+                                    <th class="table-th text-emerald-900/40 px-6 py-4 hide-on-mobile">MENU</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4 text-center">AKSI</th>
                                 </tr>
                             </thead>
@@ -2057,6 +2114,42 @@
             });
         }
 
+        // === INJEKSI: UI Density Controller ===
+        window.setPreviewDensity = function (mode) {
+            tempSettings.uiDensity = mode;
+            window.dashboardSettings.uiDensity = mode; // Apply to global memory immediately
+            applyDensity(mode); // Live apply
+            updateDensityUI(mode);
+        };
+
+        window.applyDensity = function (mode) {
+            const body = document.body;
+            body.classList.remove('density-compact', 'density-normal', 'density-large');
+            body.classList.add(`density-${mode}`);
+
+            // Simpan ke local settings
+            const settings = JSON.parse(localStorage.getItem('dashboardSettings')) || {};
+            settings.uiDensity = mode;
+            localStorage.setItem('dashboardSettings', JSON.stringify(settings));
+
+            console.log(`[UI] Density changed to: ${mode}`);
+        };
+
+        window.updateDensityUI = function (mode) {
+            ['compact', 'normal', 'large'].forEach(d => {
+                const btn = document.getElementById('btnDensity' + d.charAt(0).toUpperCase() + d.slice(1));
+                if (btn) {
+                    if (d === mode) {
+                        btn.classList.add('border-emerald-500', 'bg-emerald-50');
+                        btn.classList.remove('border-transparent');
+                    } else {
+                        btn.classList.remove('border-emerald-500', 'bg-emerald-50');
+                        btn.classList.add('border-transparent');
+                    }
+                }
+            });
+        };
+
         window.saveAllSettings = function () {
             window.updateSettings(tempSettings);
             window.showNotification('Pengaturan berhasil disimpan!');
@@ -2069,11 +2162,14 @@
                     colorMode: 'light',
                     theme: 'emerald',
                     accentColor: 'none',
-                    language: 'id'
+                    language: 'id',
+                    uiDensity: 'normal' // === INJEKSI: Reset density to default ===
                 };
                 tempSettings = { ...defaults };
                 window.updateSettings(defaults);
                 initSettingsUI();
+                // Apply density after reset
+                if (typeof applyDensity === 'function') applyDensity('normal');
                 window.showNotification('Pengaturan dikembalikan ke default.');
             }
         };
@@ -2097,6 +2193,8 @@
                 setPreviewAccent(s.accentColor);
             }
             updateLangUI(s.language);
+            // === INJEKSI: Update density UI on settings init ===
+            if (typeof updateDensityUI === 'function') updateDensityUI(s.uiDensity || 'normal');
         };
 
         // Call once on DOMContentLoaded right after general theme initialization
@@ -2122,6 +2220,17 @@
             if (typeof applyTheme === 'function') applyTheme();
             if (typeof applyLanguage === 'function') applyLanguage();
             if (typeof initSettingsUI === 'function') initSettingsUI();
+
+            // === INJEKSI: Apply UI Density on Load ===
+            const savedSettings = JSON.parse(localStorage.getItem('dashboardSettings'));
+            if (savedSettings && savedSettings.uiDensity) {
+                if (typeof applyDensity === 'function') applyDensity(savedSettings.uiDensity);
+                if (typeof updateDensityUI === 'function') updateDensityUI(savedSettings.uiDensity);
+            } else {
+                // Default to normal density
+                if (typeof applyDensity === 'function') applyDensity('normal');
+                if (typeof updateDensityUI === 'function') updateDensityUI('normal');
+            }
 
             document.getElementById('login-overlay').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
@@ -2920,17 +3029,29 @@
             views.forEach(v => {
                 const el = document.getElementById('view-' + v);
                 const tab = document.getElementById('tab-' + v);
+                const mobileNav = document.getElementById('mobile-nav-' + v);
                 if (el) el.classList.add('hidden');
                 if (tab) {
                     tab.classList.remove('active');
+                }
+                // Reset mobile nav active state
+                if (mobileNav) {
+                    mobileNav.classList.remove('active:text-emerald-600');
+                    mobileNav.classList.add('text-emerald-900/40');
                 }
             });
 
             const targetView = document.getElementById('view-' + viewId);
             const targetTab = document.getElementById('tab-' + viewId);
+            const targetMobileNav = document.getElementById('mobile-nav-' + viewId);
             if (targetView) targetView.classList.remove('hidden');
             if (targetTab) {
                 targetTab.classList.add('active');
+            }
+            // Set mobile nav active state
+            if (targetMobileNav) {
+                targetMobileNav.classList.add('active:text-emerald-600');
+                targetMobileNav.classList.remove('text-emerald-900/40');
             }
 
             // Load view-specific data
@@ -6134,6 +6255,26 @@
         }
 
     </script>
+
+    <!-- INJEKSI: Mobile Bottom Navigation -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-emerald-900/10 flex justify-around p-3 z-[60] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <button onclick="switchView('home')" id="mobile-nav-home" class="flex flex-col items-center gap-1 text-emerald-900/40 active:text-emerald-600 transition-colors">
+            <span class="text-xl">🏠</span>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Home</span>
+        </button>
+        <button onclick="switchView('reservation')" id="mobile-nav-reservation" class="flex flex-col items-center gap-1 text-emerald-900/40">
+            <span class="text-xl">📅</span>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Reservasi</span>
+        </button>
+        <button onclick="switchView('menu')" id="mobile-nav-menu" class="flex flex-col items-center gap-1 text-emerald-900/40">
+            <span class="text-xl">📋</span>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">BEO</span>
+        </button>
+        <button onclick="switchView('settings')" id="mobile-nav-settings" class="flex flex-col items-center gap-1 text-emerald-900/40">
+            <span class="text-xl">⚙️</span>
+            <span class="text-[9px] font-bold uppercase tracking-tighter">Set</span>
+        </button>
+    </nav>
 </body>
 
 </html>
