@@ -349,27 +349,45 @@
 
         /* === INJEKSI: Responsive Helper & Density Scales === */
         :root {
-            --base-font-size: 0.875rem; /* default sm */
+            --base-font-size: 0.875rem;
+            /* default sm */
         }
 
         body {
             font-size: var(--base-font-size);
             transition: font-size 0.2s ease-in-out;
-            padding-bottom: 60px; /* Ruang untuk Mobile Bottom Nav */
+            padding-bottom: 60px;
+            /* Ruang untuk Mobile Bottom Nav */
         }
 
         @media (min-width: 768px) {
-            body { padding-bottom: 0; }
+            body {
+                padding-bottom: 0;
+            }
         }
 
         /* UI Density Classes */
-        .density-compact { --base-font-size: 0.75rem; }  /* text-xs */
-        .density-normal { --base-font-size: 0.875rem; }   /* text-sm */
-        .density-large { --base-font-size: 1rem; }        /* text-base */
+        .density-compact {
+            --base-font-size: 0.75rem;
+        }
+
+        /* text-xs */
+        .density-normal {
+            --base-font-size: 0.875rem;
+        }
+
+        /* text-sm */
+        .density-large {
+            --base-font-size: 1rem;
+        }
+
+        /* text-base */
 
         /* Utility: Hide non-essential columns on mobile */
         @media (max-width: 1023px) {
-            .hide-on-mobile { display: none !important; }
+            .hide-on-mobile {
+                display: none !important;
+            }
         }
     </style>
     <!-- Chosen Palette: Warm Stone & Amber (Warm neutrals background, Amber primary for hospitality feel, Red/Green for status) -->
@@ -2232,15 +2250,21 @@
                 if (typeof updateDensityUI === 'function') updateDensityUI('normal');
             }
 
-            document.getElementById('login-overlay').classList.add('hidden');
-            document.getElementById('app-content').classList.remove('hidden');
-            console.log('Authentication bypassed.');
-            // DEFAULT TO HOME VIEW on load
-            if (typeof switchView === 'function') switchView('home');
-            else window.switchView('home');
+            // [PATCH C] Ensure Valid Auth Token Before Hydration
+            firebase.auth().signInAnonymously()
+                .then(() => {
+                    console.log('✅ Authenticated implicitly. Token acquired.');
+                    document.getElementById('login-overlay').classList.add('hidden');
+                    document.getElementById('app-content').classList.remove('hidden');
 
-            if (typeof setupRealtimeListener === 'function') setupRealtimeListener();
-            else window.setupRealtimeListener();
+                    // Initialize Views & Listeners ONLY after auth is confirmed
+                    if (typeof switchView === 'function') switchView('home');
+                    if (typeof setupRealtimeListener === 'function') setupRealtimeListener();
+                })
+                .catch((error) => {
+                    console.error('❌ Auth Failed. Cannot read Database:', error.code, error.message);
+                    // Optional: Handle UI fallback for unauthenticated users
+                });
         });
 
         // Original check kept commented out for reference:
@@ -2594,7 +2618,12 @@
         let reservations = [];
 
         // Global State
-        const today = new Date().toISOString().split('T')[0];
+        // [PATCH A] Localized Date Calculation
+        function getLocalYMD(date = new Date()) {
+            const tzOffset = date.getTimezoneOffset() * 60000;
+            return (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 10);
+        }
+        const today = getLocalYMD();
         let state = {
             selectedDate: today,
             filterArea: 'all',
@@ -2620,37 +2649,24 @@
                 loadBEOList();
             });
 
-            // --- FIX: Real-time Listener for Categories ---
-            const tenantIdStr = typeof CLIENT_CONFIG !== 'undefined' ? CLIENT_CONFIG.tenant.id : (typeof tenantId !== 'undefined' ? tenantId : 'klien_super_001');
+            // [PATCH B] Unified Menu Settings Listener
+            const tenantPath = typeof CLIENT_CONFIG !== 'undefined' ? CLIENT_CONFIG.tenant.id : 'klien_super_001';
 
-            database.ref(tenantIdStr + '/categories').on('value', (snapshot) => {
-                // Determine the correct global array (window.categories, window.categoryData, or categories)
-                let tempCategories = [];
-                snapshot.forEach(child => {
-                    tempCategories.push({ id: child.key, ...child.val() });
-                });
+            database.ref(tenantPath + '/settings/menus').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const payload = snapshot.val();
 
-                if (typeof window.categoryData !== 'undefined') window.categoryData = tempCategories;
-                else if (typeof categories !== 'undefined') categories = tempCategories;
+                    // Hydrate Global Memory
+                    window.menuCategories = payload;
 
-                // Re-render UI
-                if (typeof renderCategories === 'function') renderCategories();
-                if (typeof renderCategoryDropdown === 'function') renderCategoryDropdown();
-            });
+                    // Update Local Storage Cache
+                    localStorage.setItem('menuCategories', JSON.stringify(payload));
 
-            // --- FIX: Real-time Listener for Menus ---
-            database.ref(tenantIdStr + '/menus').on('value', (snapshot) => {
-                let tempMenus = [];
-                snapshot.forEach(child => {
-                    tempMenus.push({ id: child.key, ...child.val() });
-                });
-
-                if (typeof window.menuData !== 'undefined') window.menuData = tempMenus;
-                else if (typeof menus !== 'undefined') menus = tempMenus;
-
-                // Re-render UI
-                if (typeof renderMenuTable === 'function') renderMenuTable();
-                else if (typeof renderMenus === 'function') renderMenus();
+                    // Trigger UI Re-render specific to current view
+                    if (typeof renderBackOfficeMenus === 'function') renderBackOfficeMenus();
+                    if (typeof loadMenuDropdown === 'function') loadMenuDropdown();
+                    if (typeof updateDashboard === 'function') updateDashboard();
+                }
             });
 
             // 2. Listener BEO (Live)
@@ -6257,20 +6273,25 @@
     </script>
 
     <!-- INJEKSI: Mobile Bottom Navigation -->
-    <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-emerald-900/10 flex justify-around p-3 z-[60] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        <button onclick="switchView('home')" id="mobile-nav-home" class="flex flex-col items-center gap-1 text-emerald-900/40 active:text-emerald-600 transition-colors">
+    <nav
+        class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-emerald-900/10 flex justify-around p-3 z-[60] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+        <button onclick="switchView('home')" id="mobile-nav-home"
+            class="flex flex-col items-center gap-1 text-emerald-900/40 active:text-emerald-600 transition-colors">
             <span class="text-xl">🏠</span>
             <span class="text-[9px] font-bold uppercase tracking-tighter">Home</span>
         </button>
-        <button onclick="switchView('reservation')" id="mobile-nav-reservation" class="flex flex-col items-center gap-1 text-emerald-900/40">
+        <button onclick="switchView('reservation')" id="mobile-nav-reservation"
+            class="flex flex-col items-center gap-1 text-emerald-900/40">
             <span class="text-xl">📅</span>
             <span class="text-[9px] font-bold uppercase tracking-tighter">Reservasi</span>
         </button>
-        <button onclick="switchView('menu')" id="mobile-nav-menu" class="flex flex-col items-center gap-1 text-emerald-900/40">
+        <button onclick="switchView('menu')" id="mobile-nav-menu"
+            class="flex flex-col items-center gap-1 text-emerald-900/40">
             <span class="text-xl">📋</span>
             <span class="text-[9px] font-bold uppercase tracking-tighter">BEO</span>
         </button>
-        <button onclick="switchView('settings')" id="mobile-nav-settings" class="flex flex-col items-center gap-1 text-emerald-900/40">
+        <button onclick="switchView('settings')" id="mobile-nav-settings"
+            class="flex flex-col items-center gap-1 text-emerald-900/40">
             <span class="text-xl">⚙️</span>
             <span class="text-[9px] font-bold uppercase tracking-tighter">Set</span>
         </button>
