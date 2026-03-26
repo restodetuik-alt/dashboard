@@ -2250,21 +2250,28 @@
                 if (typeof updateDensityUI === 'function') updateDensityUI('normal');
             }
 
-            // [PATCH C] Ensure Valid Auth Token Before Hydration
+            // [PATCH C - REVISED] Fail-Safe Auth Hydration
             firebase.auth().signInAnonymously()
                 .then(() => {
                     console.log('✅ Authenticated implicitly. Token acquired.');
-                    document.getElementById('login-overlay').classList.add('hidden');
-                    document.getElementById('app-content').classList.remove('hidden');
-
-                    // Initialize Views & Listeners ONLY after auth is confirmed
-                    if (typeof switchView === 'function') switchView('home');
-                    if (typeof setupRealtimeListener === 'function') setupRealtimeListener();
+                    initDashboardCore();
                 })
                 .catch((error) => {
-                    console.error('❌ Auth Failed. Cannot read Database:', error.code, error.message);
-                    // Optional: Handle UI fallback for unauthenticated users
+                    console.warn('⚠️ Anonymous Auth Failed. Menggunakan fallback akses. Error:', error.message);
+                    initDashboardCore(); // Fail-safe: Tetap jalankan sistem penarik data
                 });
+
+            // Fungsi mandiri untuk mengeksekusi UI & Database
+            function initDashboardCore() {
+                const overlay = document.getElementById('login-overlay');
+                const content = document.getElementById('app-content');
+
+                if (overlay) overlay.classList.add('hidden');
+                if (content) content.classList.remove('hidden');
+
+                if (typeof switchView === 'function') switchView('home');
+                if (typeof setupRealtimeListener === 'function') setupRealtimeListener();
+            }
         });
 
         // Original check kept commented out for reference:
