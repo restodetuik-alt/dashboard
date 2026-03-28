@@ -346,49 +346,6 @@
             box-shadow: 0 40px 100px -30px rgba(6, 78, 59, 0.15);
             text-align: center;
         }
-
-        /* === INJEKSI: Responsive Helper & Density Scales === */
-        :root {
-            --base-font-size: 0.875rem;
-            /* default sm */
-        }
-
-        body {
-            font-size: var(--base-font-size);
-            transition: font-size 0.2s ease-in-out;
-            padding-bottom: 60px;
-            /* Ruang untuk Mobile Bottom Nav */
-        }
-
-        @media (min-width: 768px) {
-            body {
-                padding-bottom: 0;
-            }
-        }
-
-        /* UI Density Classes */
-        .density-compact {
-            --base-font-size: 0.75rem;
-        }
-
-        /* text-xs */
-        .density-normal {
-            --base-font-size: 0.875rem;
-        }
-
-        /* text-sm */
-        .density-large {
-            --base-font-size: 1rem;
-        }
-
-        /* text-base */
-
-        /* Utility: Hide non-essential columns on mobile */
-        @media (max-width: 1023px) {
-            .hide-on-mobile {
-                display: none !important;
-            }
-        }
     </style>
     <!-- Chosen Palette: Warm Stone & Amber (Warm neutrals background, Amber primary for hospitality feel, Red/Green for status) -->
     <!-- Application Structure Plan: 
@@ -409,8 +366,8 @@
 
 <body class="bg-stone-50 text-stone-800 font-sans antialiased">
 
-    <!-- LOGIN OVERLAY -->
-    <div id="login-overlay" class="fixed inset-0 z-[100] login-overlay p-4 hidden" style="display: none !important;">
+    <!-- VIEW: LOGIN -->
+    <div id="view-login" class="min-h-screen login-overlay p-4 hidden">
         <div class="login-card">
             <div class="mb-10">
                 <img id="ui-login-logo" src="" alt="Logo" class="h-20 mx-auto mb-6 hidden">
@@ -434,6 +391,9 @@
                 <button type="submit" class="btn-primary w-full text-lg py-5 shadow-2xl shadow-emerald-900/20">
                     Masuk Dashboard
                 </button>
+                <button type="button" onclick="setAppRole('landing')"
+                    class="text-xs text-stone-500 hover:text-emerald-700 font-bold mt-4 block w-full text-center">Kembali
+                    ke Portal</button>
             </form>
             <p class="mt-12 text-xs font-bold text-emerald-900/20 uppercase tracking-tighter">&copy; 2026 Detuik
                 Operations</p>
@@ -443,8 +403,143 @@
     <!-- MAIN APP WRAPPER (Visible by default now) -->
     <div id="app-content" class="min-h-screen">
 
+        <div id="view-landing"
+            class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-900 bg-opacity-5">
+            <div class="max-w-md w-full text-center mb-10">
+                <div
+                    class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 mb-6 text-4xl">
+                    🍽️
+                </div>
+                <h1 id="portal-title" class="text-4xl font-extrabold text-emerald-900 tracking-tight font-serif">Sistem
+                    Reservasi</h1>
+                <p class="text-emerald-700 mt-2">Pilih pintu masuk Anda</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full">
+                <button onclick="setAppRole('guest')"
+                    class="group relative bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-emerald-500 transition-all duration-300 text-left overflow-hidden">
+                    <div class="text-4xl mb-4 relative z-10">👤</div>
+                    <h2 class="text-2xl font-bold text-stone-800 mb-2 relative z-10">Portal Tamu</h2>
+                    <p class="text-stone-500 text-sm relative z-10">Lakukan reservasi meja secara mandiri. Cek
+                        ketersediaan secara real-time.</p>
+                </button>
+
+                <button onclick="setAppRole('login')"
+                    class="group relative bg-stone-900 p-8 rounded-3xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-emerald-400 transition-all duration-300 text-left overflow-hidden">
+                    <div class="text-4xl mb-4 relative z-10">🛡️</div>
+                    <h2 class="text-2xl font-bold text-white mb-2 relative z-10">Dashboard Admin</h2>
+                    <p class="text-stone-400 text-sm relative z-10">Kelola semua reservasi, atur meja, dan pantau
+                        operasional restoran.</p>
+                </button>
+            </div>
+        </div>
+
+        <div id="view-guest" class="min-h-screen bg-stone-50 hidden py-10 px-4">
+            <div class="max-w-2xl mx-auto">
+                <button onclick="setAppRole('landing')"
+                    class="flex items-center text-stone-500 hover:text-emerald-600 mb-8 transition font-bold text-sm">
+                    <span class="text-lg mr-2">←</span> Kembali ke Portal
+                </button>
+
+                <div class="bg-white rounded-[32px] shadow-xl overflow-hidden border border-stone-100 card-jelu">
+                    <div class="bg-gradient-to-r from-emerald-800 to-emerald-600 p-10 text-white text-center">
+                        <h2 class="text-3xl font-bold font-serif mb-2">Reservasi Meja Mandiri</h2>
+                        <p class="text-emerald-100 text-sm">Silakan lengkapi data diri dan pilih waktu kedatangan Anda.
+                        </p>
+                    </div>
+
+                    <form id="guestReservationForm" class="p-8 md:p-10 space-y-8" onsubmit="handleGuestSubmit(event)">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Nama
+                                    Lengkap</label>
+                                <input type="text" id="guestPIC" required class="modern-input w-full"
+                                    placeholder="Contoh: Bpk. Budi Santoso">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Nomor
+                                    WhatsApp</label>
+                                <input type="tel" id="guestContact" required class="modern-input w-full"
+                                    placeholder="08123456789">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Tanggal
+                                    Kedatangan</label>
+                                <input type="date" id="guestDate" required class="modern-input w-full">
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Jam
+                                    Kedatangan</label>
+                                <select id="guestTimeStart" required class="modern-input w-full"></select>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Estimasi
+                                    Selesai</label>
+                                <select id="guestTimeEnd" required class="modern-input w-full"></select>
+                            </div>
+                        </div>
+
+                        <div
+                            class="grid grid-cols-1 md:grid-cols-2 gap-8 bg-emerald-50/50 p-6 md:p-8 rounded-[24px] border border-emerald-100">
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Pilih
+                                    Area</label>
+                                <select id="guestArea" required class="modern-input w-full bg-white font-medium">
+                                    <option value="" disabled selected>-- Pilih Tanggal & Jam Dahulu --</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label
+                                    class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Jumlah
+                                    Tamu (Pax)</label>
+                                <input type="number" id="guestPax" min="1" value="2" required
+                                    class="modern-input w-full bg-white">
+                            </div>
+                        </div>
+
+                        <div>
+                            <label
+                                class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Catatan
+                                Tambahan (Opsional)</label>
+                            <textarea id="guestNotes" rows="2" class="modern-input w-full"
+                                placeholder="Contoh: Ada anak kecil, minta high chair..."></textarea>
+                        </div>
+
+                        <button type="submit" class="btn-primary w-full py-5 text-lg shadow-xl shadow-emerald-900/20">
+                            Kirim Permintaan Reservasi
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOTIFICATION MODAL -->
+        <div id="notifModal"
+            class="fixed inset-y-0 right-0 w-80 bg-white shadow-2xl z-[200] transform transition-transform translate-x-full border-l border-emerald-900/10">
+            <div class="p-6 bg-emerald-900 text-white flex justify-between items-center rounded-bl-3xl">
+                <h3 class="font-bold text-lg">Notifikasi</h3>
+                <div class="flex items-center gap-3">
+                    <button onclick="markAllNotificationsRead()" class="text-[10px] text-emerald-300 hover:text-white font-semibold underline transition-colors">Tandai sudah dibaca semua</button>
+                    <button onclick="closeNotif()"
+                        class="text-emerald-300 hover:text-white transition font-bold text-xl">&times;</button>
+                </div>
+            </div>
+            <div id="notifList" class="p-4 space-y-3 overflow-y-auto" style="height: calc(100vh - 80px);">
+                <!-- Notifications injected here -->
+            </div>
+        </div>
+
         <!-- Navbar / Header -->
-        <header class="glass sticky top-0 z-50">
+        <header id="admin-header" class="glass sticky top-0 z-50 hidden">
             <div class="max-w-[1440px] mx-auto px-10 h-24 flex items-center justify-between">
                 <div class="flex items-center gap-6">
                     <img id="ui-header-logo" src="" alt="Logo" class="h-12 w-auto hidden">
@@ -470,10 +565,17 @@
                 <div class="flex items-center gap-8 text-right">
                     <div class="hidden xl:block">
                         <p class="text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest">Global Status</p>
-                        <div class="flex gap-4">
+                        <div class="flex gap-4 items-center">
                             <span class="text-xs font-bold text-emerald-900"><span id="globalTotalPax">0</span>
                                 PAX</span>
                             <span class="text-xs font-bold text-emerald-900" id="globalTotalDP">Rp 0</span>
+
+                            <!-- NOTIF BELL ICON -->
+                            <div class="relative cursor-pointer ml-4" onclick="openNotif()">
+                                <span class="text-2xl">🔔</span>
+                                <span id="notifBadge"
+                                    class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow hidden">0</span>
+                            </div>
                         </div>
                     </div>
 
@@ -499,7 +601,7 @@
             </div>
         </header>
 
-        <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 space-y-8">
+        <main id="admin-main" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 space-y-8 hidden">
 
             <!-- VIEW: SETTINGS -->
             <div id="view-settings" class="hidden space-y-8 view-content fade-in">
@@ -649,38 +751,6 @@
                                 <span class="lang-check text-emerald-600 font-bold hidden">✓</span>
                             </button>
                         </div>
-                    </div>
-
-                    <!-- F. UI Density Control -->
-                    <div class="modern-card space-y-4 md:col-span-2 lg:col-span-1">
-                        <div class="flex items-center gap-3 border-b border-emerald-900/10 pb-4 mb-4">
-                            <span class="text-emerald-600 text-xl font-bold">📐</span>
-                            <h4 class="text-lg font-bold text-emerald-900">UI Density</h4>
-                        </div>
-                        <label class="block mb-4 text-sm font-bold text-stone-500 uppercase tracking-widest">Ukuran
-                            Tampilan Antarmuka</label>
-
-                        <div class="grid grid-cols-3 gap-3">
-                            <button onclick="setPreviewDensity('compact')" id="btnDensityCompact"
-                                class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-stone-50 transition-all hover:bg-stone-100 focus:outline-none gap-1">
-                                <span class="text-lg">◉</span>
-                                <span class="text-xs font-bold text-stone-600">Compact</span>
-                                <span class="text-[9px] text-stone-400">±12px</span>
-                            </button>
-                            <button onclick="setPreviewDensity('normal')" id="btnDensityNormal"
-                                class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-stone-50 transition-all hover:bg-stone-100 focus:outline-none gap-1">
-                                <span class="text-lg">◉</span>
-                                <span class="text-xs font-bold text-stone-600">Normal</span>
-                                <span class="text-[9px] text-stone-400">±14px</span>
-                            </button>
-                            <button onclick="setPreviewDensity('large')" id="btnDensityLarge"
-                                class="flex flex-col items-center justify-center p-4 rounded-xl border-2 border-transparent bg-stone-50 transition-all hover:bg-stone-100 focus:outline-none gap-1">
-                                <span class="text-lg">◉</span>
-                                <span class="text-xs font-bold text-stone-600">Large</span>
-                                <span class="text-[9px] text-stone-400">±16px</span>
-                            </button>
-                        </div>
-                        <p class="text-xs text-stone-400 mt-2">Mengatur ukuran teks dan jarak elemen antarmuka.</p>
                     </div>
                 </div>
 
@@ -1188,9 +1258,9 @@
                                 <tr>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">PIC / KONTAK</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">AREA / WAKTU</th>
-                                    <th class="table-th text-emerald-900/40 px-6 py-4 hide-on-mobile">CAP / TYPE</th>
+                                    <th class="table-th text-emerald-900/40 px-6 py-4">CAP / TYPE</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">STATUS</th>
-                                    <th class="table-th text-emerald-900/40 px-6 py-4 hide-on-mobile">MENU</th>
+                                    <th class="table-th text-emerald-900/40 px-6 py-4">MENU</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4 text-center">AKSI</th>
                                 </tr>
                             </thead>
@@ -1818,19 +1888,19 @@
                 themeColor: "amber"
             },
             firebase: {
-                apiKey: "AIzaSyCrTFT_b7ouw4tMp8KoeNLZkdgeJZ3mJ3M",
-                authDomain: "super-db-master.firebaseapp.com",
-                databaseURL: "https://super-db-master-default-rtdb.asia-southeast1.firebasedatabase.app",
-                projectId: "super-db-master",
-                storageBucket: "super-db-master.firebasestorage.app",
-                messagingSenderId: "964674695401",
-                appId: "1:964674695401:web:017de9fbbed8b7b4470078",
-                measurementId: "G-YZJHF5DKGZ"
+                apiKey: "AIzaSyBDLg2Zd2GTdDrfrIQpU1QuIKHoZf_7HOg",
+                authDomain: "whitelabeldb-825b1.firebaseapp.com",
+                databaseURL: "https://whitelabeldb-825b1-default-rtdb.asia-southeast1.firebasedatabase.app",
+                projectId: "whitelabeldb-825b1",
+                storageBucket: "whitelabeldb-825b1.firebasestorage.app",
+                messagingSenderId: "24500288542",
+                appId: "1:24500288542:web:670b0ad05fa1b2bc12c20f",
+                measurementId: "G-YMGNYR0JSD"
             },
             watzap: {
                 apiKey: "BTLXFLVNNF6DQUEL",
                 numberKey: "J4J9KHdFRI8v02S0",
-                baseUrl: "https://api.watzap.id/v1/"
+                baseUrl: "https://api.watzap.id/v1"
             }
         };
 
@@ -2132,42 +2202,6 @@
             });
         }
 
-        // === INJEKSI: UI Density Controller ===
-        window.setPreviewDensity = function (mode) {
-            tempSettings.uiDensity = mode;
-            window.dashboardSettings.uiDensity = mode; // Apply to global memory immediately
-            applyDensity(mode); // Live apply
-            updateDensityUI(mode);
-        };
-
-        window.applyDensity = function (mode) {
-            const body = document.body;
-            body.classList.remove('density-compact', 'density-normal', 'density-large');
-            body.classList.add(`density-${mode}`);
-
-            // Simpan ke local settings
-            const settings = JSON.parse(localStorage.getItem('dashboardSettings')) || {};
-            settings.uiDensity = mode;
-            localStorage.setItem('dashboardSettings', JSON.stringify(settings));
-
-            console.log(`[UI] Density changed to: ${mode}`);
-        };
-
-        window.updateDensityUI = function (mode) {
-            ['compact', 'normal', 'large'].forEach(d => {
-                const btn = document.getElementById('btnDensity' + d.charAt(0).toUpperCase() + d.slice(1));
-                if (btn) {
-                    if (d === mode) {
-                        btn.classList.add('border-emerald-500', 'bg-emerald-50');
-                        btn.classList.remove('border-transparent');
-                    } else {
-                        btn.classList.remove('border-emerald-500', 'bg-emerald-50');
-                        btn.classList.add('border-transparent');
-                    }
-                }
-            });
-        };
-
         window.saveAllSettings = function () {
             window.updateSettings(tempSettings);
             window.showNotification('Pengaturan berhasil disimpan!');
@@ -2180,14 +2214,11 @@
                     colorMode: 'light',
                     theme: 'emerald',
                     accentColor: 'none',
-                    language: 'id',
-                    uiDensity: 'normal' // === INJEKSI: Reset density to default ===
+                    language: 'id'
                 };
                 tempSettings = { ...defaults };
                 window.updateSettings(defaults);
                 initSettingsUI();
-                // Apply density after reset
-                if (typeof applyDensity === 'function') applyDensity('normal');
                 window.showNotification('Pengaturan dikembalikan ke default.');
             }
         };
@@ -2211,8 +2242,6 @@
                 setPreviewAccent(s.accentColor);
             }
             updateLangUI(s.language);
-            // === INJEKSI: Update density UI on settings init ===
-            if (typeof updateDensityUI === 'function') updateDensityUI(s.uiDensity || 'normal');
         };
 
         // Call once on DOMContentLoaded right after general theme initialization
@@ -2239,57 +2268,32 @@
             if (typeof applyLanguage === 'function') applyLanguage();
             if (typeof initSettingsUI === 'function') initSettingsUI();
 
-            // === INJEKSI: Apply UI Density on Load ===
-            const savedSettings = JSON.parse(localStorage.getItem('dashboardSettings'));
-            if (savedSettings && savedSettings.uiDensity) {
-                if (typeof applyDensity === 'function') applyDensity(savedSettings.uiDensity);
-                if (typeof updateDensityUI === 'function') updateDensityUI(savedSettings.uiDensity);
-            } else {
-                // Default to normal density
-                if (typeof applyDensity === 'function') applyDensity('normal');
-                if (typeof updateDensityUI === 'function') updateDensityUI('normal');
+            document.getElementById('login-overlay').classList.add('hidden');
+            // Initialize the app state to show the Landing Portal
+            if (typeof window.setAppRole === 'function') {
+                window.setAppRole('landing');
             }
+            document.getElementById('app-content').classList.remove('hidden');
+            console.log('Authentication bypassed.');
+            // DEFAULT TO HOME VIEW on load
+            if (typeof switchView === 'function') switchView('home');
+            else window.switchView('home');
 
-            // [PATCH C - REVISED] Fail-Safe Auth Hydration
-            firebase.auth().signInAnonymously()
-                .then(() => {
-                    console.log('✅ Authenticated implicitly. Token acquired.');
-                    initDashboardCore();
-                })
-                .catch((error) => {
-                    console.warn('⚠️ Anonymous Auth Failed. Menggunakan fallback akses. Error:', error.message);
-                    initDashboardCore(); // Fail-safe: Tetap jalankan sistem penarik data
-                });
-
-            // Fungsi mandiri untuk mengeksekusi UI & Database
-            function initDashboardCore() {
-                const overlay = document.getElementById('login-overlay');
-                const content = document.getElementById('app-content');
-
-                if (overlay) overlay.classList.add('hidden');
-                if (content) content.classList.remove('hidden');
-
-                if (typeof switchView === 'function') switchView('home');
-                if (typeof setupRealtimeListener === 'function') setupRealtimeListener();
-            }
+            if (typeof setupRealtimeListener === 'function') setupRealtimeListener();
+            else window.setupRealtimeListener();
         });
 
-        // Original check kept commented out for reference:
-        /*
         auth.onAuthStateChanged(user => {
             if (user) {
-                document.getElementById('login-overlay').classList.add('hidden');
-                document.getElementById('app-content').classList.remove('hidden');
-                switchView('home');
+                // If logged in, show admin and start listener
+                setAppRole('admin');
                 setupRealtimeListener();
             } else {
-                document.getElementById('login-overlay').classList.remove('hidden');
-                document.getElementById('app-content').classList.add('hidden');
+                // If not logged in, show landing
+                setAppRole('landing');
             }
         });
-        */
 
-        // (Login logic moved downstream to section 5)
         // Date Picker Listener (Upgrade #1)
         document.getElementById('datePicker').addEventListener('change', function (e) {
             state.selectedDate = e.target.value;
@@ -2297,13 +2301,131 @@
             updateDashboard();
         });
 
+        // Handle Admin Login Form Submission
+        document.getElementById('loginForm').addEventListener('submit', function (e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value;
+            const pass = document.getElementById('loginPassword').value;
+            const errDiv = document.getElementById('loginError');
+
+            auth.signInWithEmailAndPassword(email, pass)
+                .then(() => {
+                    errDiv.classList.add('hidden');
+                    alert('Login berhasil! Selamat datang.');
+                })
+                .catch(err => {
+                    errDiv.classList.remove('hidden');
+                    console.error('Login error:', err);
+                });
+        });
+
         // Logout function
         window.logout = function () {
             auth.signOut().then(() => {
-                console.log('Logged out');
+                alert('Anda telah logout dari sistem.');
+                setAppRole('landing'); // Redirect to portal after logout
             }).catch((error) => {
                 console.error('Logout error:', error);
             });
+        };
+
+        // --- NOTIFICATION ENGINE ---
+        window.openNotif = function () {
+            document.getElementById('notifModal').classList.remove('translate-x-full');
+        };
+
+        window.closeNotif = function () {
+            document.getElementById('notifModal').classList.add('translate-x-full');
+        };
+
+        // [PATCH A] Notification UX Functions
+        window.markAllNotificationsRead = function() {
+            const tenantId = (typeof tenantDb !== 'undefined' ? tenantDb : CLIENT_CONFIG.tenant.id);
+            
+            // Mark all Nego reservations as read in Firebase
+            const negoRes = reservations.filter(r => r.status === 'Nego' && !r.notifRead);
+            if (negoRes.length === 0) return;
+            
+            const updates = {};
+            negoRes.forEach(r => {
+                updates[r.id + '/notifRead'] = true;
+            });
+            
+            database.ref(tenantId + '/reservations').update(updates).then(() => {
+                console.log('✅ Semua notifikasi ditandai sudah dibaca.');
+                
+                // [PATCH B] Optimistic UI Clearing
+                const notifListEl = document.getElementById('notifList');
+                if (notifListEl) {
+                    notifListEl.innerHTML = '<div class="text-center text-stone-400 text-sm italic py-10">Tidak ada notifikasi baru.</div>';
+                }
+                
+                const badge = document.getElementById('notifBadge');
+                if (badge) {
+                    badge.classList.add('hidden');
+                    badge.textContent = '0';
+                }
+            });
+        };
+
+        window.handleNotificationClick = function(resId, notifId) {
+            // 1. Mark this specific reservation notification as read in Firebase
+            if (resId) {
+                const tenantId = (typeof tenantDb !== 'undefined' ? tenantDb : CLIENT_CONFIG.tenant.id);
+                database.ref(tenantId + '/reservations/' + resId + '/notifRead').set(true);
+            }
+            
+            // 2. Close notification panel & route to Reservation Tab
+            closeNotif();
+            if (typeof switchView === 'function') switchView('reservation');
+            
+            // 3. Open the specific reservation edit form
+            if (resId && typeof openEditModal === 'function') {
+                setTimeout(() => {
+                    openEditModal(resId);
+                }, 300);
+            }
+        };
+
+        window.updateNotifications = function () {
+            const notifList = document.getElementById('notifList');
+            const notifBadge = document.getElementById('notifBadge');
+
+            if (!notifList || !notifBadge) return;
+
+            // [PATCH A] Filter out read notifications
+            const negoRes = reservations.filter(r => r.status === 'Nego' && !r.notifRead);
+
+            if (negoRes.length > 0) {
+                notifBadge.innerText = negoRes.length;
+                notifBadge.classList.remove('hidden');
+            } else {
+                notifBadge.classList.add('hidden');
+            }
+
+            notifList.innerHTML = '';
+
+            if (negoRes.length === 0) {
+                notifList.innerHTML = `<div class="text-center text-stone-400 text-sm italic py-10">Tidak ada notifikasi baru.</div>`;
+            } else {
+                negoRes.forEach(r => {
+                    const areaName = areaDefinitions.find(a => a.id === r.area)?.name || r.area;
+
+                    const el = document.createElement('div');
+                    el.className = 'bg-amber-50 border border-amber-200 p-4 rounded-xl shadow-sm hover:shadow-md cursor-pointer transition';
+                    el.onclick = () => handleNotificationClick(r.id, null);
+                    el.innerHTML = `
+                        <div class="flex justify-between items-start mb-1">
+                            <span class="text-[10px] font-bold text-amber-600 uppercase tracking-wider">Tamu Baru Menunggu</span>
+                            <span class="text-[10px] font-bold text-stone-400">${r.date}</span>
+                        </div>
+                        <div class="font-bold text-stone-800 text-sm">${r.pic} <span class="text-xs text-stone-500 font-normal">(${r.pax} pax)</span></div>
+                        <div class="text-xs text-stone-600 mt-1">Area: ${areaName} | ${r.timeStart}</div>
+                        <div class="text-xs font-bold text-amber-600 mt-2 bg-amber-100 px-2 py-1 rounded inline-block">Klik untuk ACC / Follow-Up</div>
+                    `;
+                    notifList.appendChild(el);
+                });
+            }
         };
 
         // --- Area and Menu Definitions ---
@@ -2625,12 +2747,7 @@
         let reservations = [];
 
         // Global State
-        // [PATCH A] Localized Date Calculation
-        function getLocalYMD(date = new Date()) {
-            const tzOffset = date.getTimezoneOffset() * 60000;
-            return (new Date(date.getTime() - tzOffset)).toISOString().slice(0, 10);
-        }
-        const today = getLocalYMD();
+        const today = new Date().toISOString().split('T')[0];
         let state = {
             selectedDate: today,
             filterArea: 'all',
@@ -2656,50 +2773,56 @@
                 loadBEOList();
             });
 
-            // [PATCH B] Unified Menu Settings Listener
-            const tenantPath = typeof CLIENT_CONFIG !== 'undefined' ? CLIENT_CONFIG.tenant.id : 'klien_super_001';
-
-            database.ref(tenantPath + '/settings/menus').on('value', (snapshot) => {
-                if (snapshot.exists()) {
-                    const payload = snapshot.val();
-
-                    // [PATCH A] Hydrate Local Memory correctly (removing window. prefix)
-                    menuCategories = payload;
-                    window.menuCategories = payload; // Keep window binding just in case other scripts rely on it
-
-                    // Update Local Storage Cache
-                    localStorage.setItem('menuCategories', JSON.stringify(payload));
-
-                    // [PATCH B.2] Trigger UI Re-render specific to current view
-                    if (typeof renderBackOfficeMenus === 'function') renderBackOfficeMenus();
-                    if (typeof loadMenuDropdown === 'function') loadMenuDropdown();
-                    if (typeof updateDashboard === 'function') updateDashboard();
-
-                    // NEW: Auto-refresh the Order Entry UI if Kasir is currently viewing it
-                    const activeResSelect = document.getElementById('menuReservationSelect');
-                    if (activeResSelect && activeResSelect.value) {
-                        if (typeof loadMenuForReservation === 'function') {
-                            console.log('🔄 Live Menu Update: Refreshing active order form...');
-                            loadMenuForReservation();
-                        }
-                    }
-                }
-            });
-
             // 2. Listener BEO (Live)
             database.ref(tenantDb + '/beoList').on('value', (snapshot) => {
                 beoList = snapshot.val() || {};
                 loadBEOList();
             });
 
-            // 3. Listener Area & Menu Back Office (Live)
+            // [PATCH B] Auto-Inject Master Areas
             database.ref(tenantDb + '/settings/areas').on('value', (snapshot) => {
-                if (snapshot.exists()) areaDefinitions = snapshot.val();
+                if (snapshot.exists()) {
+                    areaDefinitions = snapshot.val();
+                    
+                    // Auto-create Garden Detuik if missing from DB
+                    if (!areaDefinitions.some(a => a.id === 'garden_detuik')) {
+                        areaDefinitions.push({
+                            id: 'garden_detuik',
+                            name: 'Garden Detuik (VIP)',
+                            capacity: 1,
+                            type: 'unit',
+                            label: '1 Area Full'
+                        });
+                        database.ref(tenantDb + '/settings/areas').set(areaDefinitions); // Sync back to DB
+                    }
+                }
+                
                 if (typeof renderBackOfficeAreas === 'function') renderBackOfficeAreas();
                 if (typeof loadAreaDropdowns === 'function') loadAreaDropdowns();
-
-                // --- FIX: Paksa update grid monitor dan tabel jika ada area baru ---
                 if (typeof updateDashboard === 'function') updateDashboard();
+            });
+
+            // [PATCH B] Unified Menu Settings Listener
+            database.ref(tenantDb + '/settings/menus').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const payload = snapshot.val();
+                    
+                    // Hydrate Local Memory correctly
+                    menuCategories = payload;
+                    window.menuCategories = payload; 
+                    localStorage.setItem('menuCategories', JSON.stringify(payload));
+                    
+                    // Trigger UI Re-render
+                    if (typeof renderBackOfficeMenus === 'function') renderBackOfficeMenus();
+                    if (typeof loadMenuDropdown === 'function') loadMenuDropdown();
+                    if (typeof updateDashboard === 'function') updateDashboard();
+                    
+                    // Auto-refresh Active Order UI
+                    const activeResSelect = document.getElementById('menuReservationSelect');
+                    if (activeResSelect && activeResSelect.value) {
+                        if (typeof loadMenuForReservation === 'function') loadMenuForReservation(); 
+                    }
+                }
             });
 
             // 4. Listener Marketing & Finance (Live)
@@ -3056,35 +3179,57 @@
         // Duplicate functions removed. Real implementations are below.
 
 
+        // --- NEW LOGIC: Role-Based Routing Engine ---
+        window.setAppRole = function (role) {
+            const viewLanding = document.getElementById('view-landing');
+            const viewGuest = document.getElementById('view-guest');
+            const viewLogin = document.getElementById('view-login');
+            const adminHeader = document.getElementById('admin-header');
+            const adminMain = document.getElementById('admin-main');
+
+            // 1. Hide all views first
+            if (viewLanding) viewLanding.classList.add('hidden');
+            if (viewGuest) viewGuest.classList.add('hidden');
+            if (viewLogin) viewLogin.classList.add('hidden');
+            if (adminHeader) adminHeader.classList.add('hidden');
+            if (adminMain) adminMain.classList.add('hidden');
+
+            // 2. Show the requested view
+            if (role === 'landing') {
+                if (viewLanding) viewLanding.classList.remove('hidden');
+            }
+            else if (role === 'guest') {
+                if (viewGuest) viewGuest.classList.remove('hidden');
+            }
+            else if (role === 'login') {
+                if (viewLogin) viewLogin.classList.remove('hidden');
+            }
+            else if (role === 'admin') {
+                if (adminHeader) adminHeader.classList.remove('hidden');
+                if (adminMain) adminMain.classList.remove('hidden');
+
+                // Ensure admin defaults to home view
+                if (typeof switchView === 'function') switchView('home');
+            }
+        };
+
         // View Switching Function
         window.switchView = function (viewId) {
             const views = ['home', 'reservation', 'menu', 'backoffice', 'settings'];
             views.forEach(v => {
                 const el = document.getElementById('view-' + v);
                 const tab = document.getElementById('tab-' + v);
-                const mobileNav = document.getElementById('mobile-nav-' + v);
                 if (el) el.classList.add('hidden');
                 if (tab) {
                     tab.classList.remove('active');
-                }
-                // Reset mobile nav active state
-                if (mobileNav) {
-                    mobileNav.classList.remove('active:text-emerald-600');
-                    mobileNav.classList.add('text-emerald-900/40');
                 }
             });
 
             const targetView = document.getElementById('view-' + viewId);
             const targetTab = document.getElementById('tab-' + viewId);
-            const targetMobileNav = document.getElementById('mobile-nav-' + viewId);
             if (targetView) targetView.classList.remove('hidden');
             if (targetTab) {
                 targetTab.classList.add('active');
-            }
-            // Set mobile nav active state
-            if (targetMobileNav) {
-                targetMobileNav.classList.add('active:text-emerald-600');
-                targetMobileNav.classList.remove('text-emerald-900/40');
             }
 
             // Load view-specific data
@@ -3128,7 +3273,7 @@
             return slots; // 22 slots: 09:00-09:30 ... 19:30-20:00
         }
 
-        // Calculate occupancy for a specific time slot in an area
+        // [PATCH A] Hierarchical Collision Engine
         function getSlotOccupancy(areaId, dateStr, slotStart, slotEnd) {
             const areaDef = areaDefinitions.find(a => a.id === areaId);
             if (!areaDef) return { occupied: 0, reservations: [] };
@@ -3136,9 +3281,26 @@
             const slotStartMin = timeToMinutes(slotStart);
             const slotEndMin = timeToMinutes(slotEnd);
 
+            // 1. Define Hierarchy Rules (Parent -> Children)
+            const areaHierarchy = {
+                'garden_detuik': ['lesehan_sangkuriang', 'pelataran_padjajaran', 'lesehan_pasundan', 'lesehan_manglayang']
+            };
+
+            // 2. Determine all related areas to check
+            let areasToCheck = [areaId];
+            if (areaHierarchy[areaId]) {
+                areasToCheck = areasToCheck.concat(areaHierarchy[areaId]); // Parent checking its children
+            }
+            for (const [parent, children] of Object.entries(areaHierarchy)) {
+                if (children.includes(areaId)) {
+                    areasToCheck.push(parent); // Child checking its parent
+                }
+            }
+
+            // 3. Filter active reservations for the relevant network
             const activeRes = reservations.filter(r =>
                 r.date === dateStr &&
-                r.area === areaId &&
+                areasToCheck.includes(r.area) &&
                 r.status !== 'Canceled'
             );
 
@@ -3146,25 +3308,31 @@
             const bookedBy = [];
 
             activeRes.forEach(r => {
-                // Default to full day for old reservations without time fields
                 const resStart = timeToMinutes(r.timeStart || '09:00');
                 const resEnd = timeToMinutes(r.timeEnd || '20:00');
-
-                // Check overlap: reservation overlaps this slot
                 const overlaps = resStart < slotEndMin && resEnd > slotStartMin;
                 if (!overlaps) return;
 
-                if (r.bookedArea) {
-                    // Booked Area: counts as full capacity blocked
-                    occupied = areaDef.capacity;
-                    bookedBy.push({ pic: r.pic, pax: r.pax, isBlocked: true, id: r.id });
-                } else {
-                    if (areaDef.type === 'unit') {
-                        occupied += 1;
+                // Case A: Exact area match
+                if (r.area === areaId) {
+                    if (r.bookedArea) {
+                        occupied = areaDef.capacity;
+                        bookedBy.push({ pic: r.pic, pax: r.pax, isBlocked: true, id: r.id });
                     } else {
-                        occupied += parseInt(r.pax) || 0;
+                        occupied += (areaDef.type === 'unit') ? 1 : (parseInt(r.pax) || 0);
+                        bookedBy.push({ pic: r.pic, pax: r.pax, isBlocked: false, id: r.id });
                     }
-                    bookedBy.push({ pic: r.pic, pax: r.pax, isBlocked: false, id: r.id });
+                } 
+                // Case B: Parent is booked, we are checking a child area
+                else if (areaHierarchy[r.area] && areaHierarchy[r.area].includes(areaId)) {
+                    occupied = areaDef.capacity; // Fully blocked by parent
+                    bookedBy.push({ pic: `${r.pic} (VIP Garden)`, pax: r.pax, isBlocked: true, id: r.id });
+                }
+                // Case C: Child is booked, we are checking the parent area
+                else if (areaHierarchy[areaId] && areaHierarchy[areaId].includes(r.area)) {
+                    occupied = areaDef.capacity; // Parent cannot be booked if any child is used
+                    const childName = areaDefinitions.find(a => a.id === r.area)?.name || r.area;
+                    bookedBy.push({ pic: `${r.pic} (di ${childName})`, pax: r.pax, isBlocked: true, id: r.id });
                 }
             });
 
@@ -4194,6 +4362,184 @@
             });
         }
 
+        // [PATCH A] Admin Smart Dropdown with Hierarchy
+        window.updateSmartAreaDropdown = function () {
+            const date = document.getElementById('inputDate').value;
+            const timeStart = document.getElementById('inputTimeStart').value;
+            const timeEnd = document.getElementById('inputTimeEnd').value;
+            const currentResId = document.getElementById('reservationId').value;
+            const areaSelect = document.getElementById('inputArea');
+            const selectedAreaVal = areaSelect.value;
+
+            if (!date || !timeStart || !timeEnd) {
+                areaSelect.innerHTML = '<option value="" disabled selected>-- Pilih Tanggal & Jam Dahulu --</option>';
+                return;
+            }
+
+            areaSelect.innerHTML = '<option value="" disabled>-- Pilih Area --</option>';
+            const startMin = timeToMinutes(timeStart);
+            const endMin = timeToMinutes(timeEnd);
+            
+            const areaHierarchy = {
+                'garden_detuik': ['lesehan_sangkuriang', 'pelataran_padjajaran', 'lesehan_pasundan', 'lesehan_manglayang']
+            };
+
+            areaDefinitions.forEach(area => {
+                let isBooked = false;
+                let occupiedPax = 0;
+                let isBlocked = false;
+
+                // 1. Establish Hierarchy Scope
+                let areasToCheck = [area.id];
+                if (areaHierarchy[area.id]) areasToCheck = areasToCheck.concat(areaHierarchy[area.id]);
+                for (const [parent, children] of Object.entries(areaHierarchy)) {
+                    if (children.includes(area.id)) areasToCheck.push(parent);
+                }
+
+                // 2. Filter Overlapping Reservations
+                const overlaps = reservations.filter(r => {
+                    if (r.id === currentResId) return false;
+                    if (r.status === 'Canceled') return false;
+                    if (r.date !== date) return false;
+                    if (!areasToCheck.includes(r.area)) return false; // Hierarchy Check
+
+                    const rStart = timeToMinutes(r.timeStart || '09:00');
+                    const rEnd = timeToMinutes(r.timeEnd || '20:00');
+                    return (startMin < rEnd) && (endMin > rStart);
+                });
+
+                // 3. Process Overlaps
+                overlaps.forEach(r => {
+                    if (r.area === area.id) {
+                        if (r.bookedArea) isBlocked = true;
+                        if (area.type === 'unit') {
+                            occupiedPax += 1;
+                        } else {
+                            occupiedPax += parseInt(r.pax) || 0;
+                        }
+                    } else {
+                        isBlocked = true; // Blocked by Parent/Child relationship
+                    }
+                });
+
+                if (isBlocked || occupiedPax >= area.capacity) {
+                    isBooked = true;
+                }
+
+                // 4. Render Dropdown Option
+                const opt = document.createElement('option');
+                opt.value = area.id;
+
+                if (isBooked) {
+                    opt.disabled = true;
+                    opt.className = "text-red-500 font-semibold bg-red-50";
+                    opt.textContent = `❌ ${area.name} (Penuh/Diblokir)`;
+                } else {
+                    opt.className = "text-emerald-900";
+                    const sisa = area.capacity - occupiedPax;
+                    const satuan = area.type === 'unit' ? 'Unit' : 'Pax';
+                    opt.textContent = `✅ ${area.name} (Sisa ${sisa} ${satuan})`;
+                }
+
+                areaSelect.appendChild(opt);
+            });
+
+            if (selectedAreaVal) {
+                const stillAvailable = Array.from(areaSelect.options).find(opt => opt.value === selectedAreaVal && !opt.disabled);
+                if (stillAvailable) {
+                    areaSelect.value = selectedAreaVal;
+                } else {
+                    areaSelect.value = "";
+                }
+            }
+        }
+
+        // [PATCH B] Guest Smart Dropdown with Hierarchy
+        window.updateGuestSmartAreaDropdown = function () {
+            const date = document.getElementById('guestDate').value;
+            const timeStart = document.getElementById('guestTimeStart').value;
+            const timeEnd = document.getElementById('guestTimeEnd').value;
+            const areaSelect = document.getElementById('guestArea');
+            const selectedAreaVal = areaSelect.value;
+
+            if (!date || !timeStart || !timeEnd) {
+                areaSelect.innerHTML = '<option value="" disabled selected>-- Pilih Tanggal & Jam Dahulu --</option>';
+                return;
+            }
+
+            areaSelect.innerHTML = '<option value="" disabled>-- Pilih Area --</option>';
+            const startMin = timeToMinutes(timeStart);
+            const endMin = timeToMinutes(timeEnd);
+
+            const areaHierarchy = {
+                'garden_detuik': ['lesehan_sangkuriang', 'pelataran_padjajaran', 'lesehan_pasundan', 'lesehan_manglayang']
+            };
+
+            areaDefinitions.forEach(area => {
+                let isBooked = false;
+                let occupiedPax = 0;
+                let isBlocked = false;
+
+                let areasToCheck = [area.id];
+                if (areaHierarchy[area.id]) areasToCheck = areasToCheck.concat(areaHierarchy[area.id]);
+                for (const [parent, children] of Object.entries(areaHierarchy)) {
+                    if (children.includes(area.id)) areasToCheck.push(parent);
+                }
+
+                const overlaps = reservations.filter(r => {
+                    if (r.status === 'Canceled') return false;
+                    if (r.date !== date) return false;
+                    if (!areasToCheck.includes(r.area)) return false;
+
+                    const rStart = timeToMinutes(r.timeStart || '09:00');
+                    const rEnd = timeToMinutes(r.timeEnd || '20:00');
+                    return (startMin < rEnd) && (endMin > rStart);
+                });
+
+                overlaps.forEach(r => {
+                    if (r.area === area.id) {
+                        if (r.bookedArea) isBlocked = true;
+                        if (area.type === 'unit') {
+                            occupiedPax += 1;
+                        } else {
+                            occupiedPax += parseInt(r.pax) || 0;
+                        }
+                    } else {
+                        isBlocked = true; // Blocked by Parent/Child relationship
+                    }
+                });
+
+                if (isBlocked || occupiedPax >= area.capacity) {
+                    isBooked = true;
+                }
+
+                const opt = document.createElement('option');
+                opt.value = area.id;
+
+                if (isBooked) {
+                    opt.disabled = true;
+                    opt.className = "text-stone-300 font-semibold bg-stone-50";
+                    opt.textContent = `❌ ${area.name} (Penuh)`;
+                } else {
+                    opt.className = "text-emerald-900";
+                    const sisa = area.capacity - occupiedPax;
+                    const satuan = area.type === 'unit' ? 'Unit' : 'Pax';
+                    opt.textContent = `✅ ${area.name} (Tersedia)`;
+                }
+
+                areaSelect.appendChild(opt);
+            });
+
+            if (selectedAreaVal) {
+                const stillAvailable = Array.from(areaSelect.options).find(opt => opt.value === selectedAreaVal && !opt.disabled);
+                if (stillAvailable) {
+                    areaSelect.value = selectedAreaVal;
+                } else {
+                    areaSelect.value = "";
+                }
+            }
+        }
+
         // --- AVAILABILITY GRID LOGIC ---
         function renderReservationTable() {
             const tbody = document.getElementById('reservationTableBody');
@@ -4278,6 +4624,7 @@
                     tbody.appendChild(tr);
                 });
             }
+            if (typeof updateNotifications === 'function') updateNotifications();
         }
 
         function renderGlobalStats() {
@@ -4402,13 +4749,7 @@
             }
 
             areaDefinitions.forEach(a => {
-                // Modal
-                const opt = document.createElement('option');
-                opt.value = a.id;
-                opt.text = `${a.name} (Kap: ${a.type === 'unit' ? a.label : a.capacity})`;
-                modalSelect.appendChild(opt);
-
-                // Filter
+                // Filter dropdown remains static
                 const optFilter = document.createElement('option');
                 optFilter.value = a.id;
                 optFilter.text = a.name;
@@ -4416,7 +4757,7 @@
             });
 
             // Populate time dropdowns (09:00 to 20:00 in 30-min steps) — runs once on init
-            const timeSelects = ['inputTimeStart', 'inputTimeEnd', 'filterTimeStart', 'filterTimeEnd'];
+            const timeSelects = ['inputTimeStart', 'inputTimeEnd', 'filterTimeStart', 'filterTimeEnd', 'guestTimeStart', 'guestTimeEnd'];
             const times = [];
             for (let m = 9 * 60; m <= 20 * 60; m += 30) {
                 const h = Math.floor(m / 60).toString().padStart(2, '0');
@@ -4435,6 +4776,27 @@
             });
             document.getElementById('inputTimeStart').value = '09:00';
             document.getElementById('inputTimeEnd').value = '20:00';
+
+            // Trigger Smart Dropdown on input changes
+            const dateInput = document.getElementById('inputDate');
+            const timeStartInput = document.getElementById('inputTimeStart');
+            const timeEndInput = document.getElementById('inputTimeEnd');
+
+            if (dateInput) dateInput.addEventListener('change', updateSmartAreaDropdown);
+            if (timeStartInput) timeStartInput.addEventListener('change', updateSmartAreaDropdown);
+            if (timeEndInput) timeEndInput.addEventListener('change', updateSmartAreaDropdown);
+
+            // Trigger Smart Dropdown for Guest on input changes
+            const guestDateInput = document.getElementById('guestDate');
+            const guestTimeStartInput = document.getElementById('guestTimeStart');
+            const guestTimeEndInput = document.getElementById('guestTimeEnd');
+
+            // Set default date for guest
+            if (guestDateInput) guestDateInput.value = state.selectedDate;
+
+            if (guestDateInput) guestDateInput.addEventListener('change', updateGuestSmartAreaDropdown);
+            if (guestTimeStartInput) guestTimeStartInput.addEventListener('change', updateGuestSmartAreaDropdown);
+            if (guestTimeEndInput) guestTimeEndInput.addEventListener('change', updateGuestSmartAreaDropdown);
 
             // Event Listeners
             datePicker.addEventListener('change', (e) => {
@@ -4556,6 +4918,71 @@
             }
         }
 
+        // --- NEW LOGIC: Handle Guest Submission ---
+        window.handleGuestSubmit = function (e) {
+            e.preventDefault();
+
+            if (isSubmittingRes) {
+                console.log("Klik ditolak: Sistem sedang memproses penyimpanan.");
+                return;
+            }
+
+            if (!database) {
+                alert('Database belum terhubung! Silakan coba lagi nanti.');
+                return;
+            }
+
+            isSubmittingRes = true;
+            const submitBtn = document.querySelector('#guestReservationForm button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '⏳ Memproses Permintaan...';
+            }
+
+            const payload = {
+                date: document.getElementById('guestDate').value,
+                pic: document.getElementById('guestPIC').value,
+                contact: document.getElementById('guestContact').value,
+                area: document.getElementById('guestArea').value,
+                pax: parseInt(document.getElementById('guestPax').value) || 2,
+                type: 'Umum / Keluarga', // Default dari publik
+                status: 'Nego', // Auto pending/Nego agar direview Admin
+                dp: 0,
+                lunas: 0,
+                total: 0,
+                notes: document.getElementById('guestNotes').value || '-',
+                timeStart: document.getElementById('guestTimeStart').value,
+                timeEnd: document.getElementById('guestTimeEnd').value,
+                bookedArea: false, // Tamu tidak bisa blokir area
+                createdAt: new Date().toISOString(),
+                menuStatus: 'Belum Order'
+            };
+
+            const dbRef = database.ref(CLIENT_CONFIG.tenant.id + '/reservations');
+
+            dbRef.push(payload)
+                .then(() => {
+                    isSubmittingRes = false;
+                    document.getElementById('guestReservationForm').reset();
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Kirim Permintaan Reservasi';
+                    }
+
+                    alert('✅ Permintaan Reservasi Berhasil Terkirim!\n\nTim admin kami akan segera menghubungi Anda melalui WhatsApp untuk konfirmasi ketersediaan dan detail menu.');
+                    setAppRole('landing'); // Kembali ke portal awal
+                })
+                .catch((error) => {
+                    isSubmittingRes = false;
+                    console.error('Error saving guest res:', error);
+                    alert('Gagal mengirim permintaan: ' + error.message);
+                    if (submitBtn) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = 'Kirim Permintaan Reservasi';
+                    }
+                });
+        }
+
         // Delete Reservation
         window.deleteReservation = function () {
             const id = document.getElementById('reservationId').value;
@@ -4592,6 +5019,7 @@
             document.getElementById('inputTimeStart').value = '09:00';
             document.getElementById('inputTimeEnd').value = '20:00';
             document.getElementById('inputBookedArea').checked = false;
+            updateSmartAreaDropdown();
         }
 
         window.openEditModal = function (id) {
@@ -4608,7 +5036,7 @@
             document.getElementById('inputDate').value = res.date;
             document.getElementById('inputPIC').value = res.pic;
             document.getElementById('inputContact').value = res.contact;
-            document.getElementById('inputArea').value = res.area;
+            // document.getElementById('inputArea').value = res.area;
             document.getElementById('inputPax').value = res.pax;
             document.getElementById('inputType').value = res.type;
             document.getElementById('inputDP').value = res.dp || 0;
@@ -4618,6 +5046,14 @@
             document.getElementById('inputTimeStart').value = res.timeStart || '09:00';
             document.getElementById('inputTimeEnd').value = res.timeEnd || '20:00';
             document.getElementById('inputBookedArea').checked = res.bookedArea || false;
+
+            // Execute smart dropdown logic
+            updateSmartAreaDropdown();
+            // Re-assign value after DOM update
+            setTimeout(() => {
+                const areaInput = document.getElementById('inputArea');
+                if (areaInput) areaInput.value = res.area;
+            }, 50);
         }
 
         window.closeModal = function () {
@@ -5394,42 +5830,36 @@
         // ============================================================
 
         let beoList = {};
-// [PATCH A] Expanded Smart Detection Keywords
+        // [PATCH A] Expanded Keywords & Smart Sorting Engine
         const KITCHEN_KEYWORDS = ['nasi', 'ayam', 'sapi', 'kambing', 'ikan', 'udang', 'cumi', 'tempe', 'tahu', 'tofu', 'sayur', 'salad', 'soup', 'sup', 'sop', 'bakso', 'mie', 'pasta', 'roti', 'sandwich', 'burger', 'snack', 'cake', 'lauk', 'tumis', 'tumisan', 'dimsum', 'kerupuk', 'sambal', 'beef', 'chicken', 'kakap', 'seafood'];
         const PANTRY_KEYWORDS = ['kopi', 'coffee', 'teh', 'tea', 'juice', 'jus', 'air', 'minum', 'drink', 'soda', 'es', 'susu', 'milk', 'sirup', 'syrup', 'lemonade', 'float', 'ice cream', 'buah', 'melon', 'semangka', 'pudding', 'dessert'];
 
-        function isKitchenItem(itemName, category) {
-            const name = (itemName || '').toLowerCase();
-            const cat = (category || '').toLowerCase();
-            if (PANTRY_KEYWORDS.some(w => name.includes(w) || cat.includes(w))) return false;
-            if (KITCHEN_KEYWORDS.some(w => name.includes(w) || cat.includes(w))) return true;
-            return true; // default to kitchen if unknown
-        }
-
-        // [PATCH A] BEO Sorting Helpers
         function getBEOWeight(type, name, subKey) {
             const n = (name || '').toLowerCase();
             const k = (subKey || '').toLowerCase();
             
-            if (k.includes('stall')) return 99; // Stall always last
+            if (n.includes('--- stall') || k.includes('stall') || n.includes('live')) return 99;
+            if (n.includes('[') && n.includes(']')) return 0;
             
             if (type === 'kitchen') {
-                if (n.includes('nasi putih')) return 1;
-                if (n.includes('sop') || n.includes('sup') || k.includes('soup')) return 2;
-                if (k.includes('lauk') || n.includes('ayam') || n.includes('beef') || n.includes('ikan') || n.includes('kakap')) return 3;
-                if (k.includes('tumis') || n.includes('cah') || n.includes('capcay') || n.includes('sayur')) return 4;
-                if (n.includes('kerupuk')) return 5;
-                if (n.includes('sambal')) return 6;
-                return 10; // Default middle
+                if (n.includes('nasi')) return 1;
+                if (n.includes('sop') || n.includes('sup') || k.includes('soup') || n.includes('bakso')) return 2;
+                if (n.includes('ayam') || n.includes('chicken') || n.includes('beef') || n.includes('sapi') || n.includes('daging')) return 3;
+                if (n.includes('ikan') || n.includes('kakap') || n.includes('gurame') || n.includes('cumi') || n.includes('seafood')) return 4;
+                if (k.includes('lauk')) return 3.5; 
+                if (k.includes('tumis') || n.includes('cah ') || n.includes('capcay') || n.includes('sayur') || n.includes('tofu') || n.includes('brokoli')) return 5;
+                if (n.includes('kerupuk')) return 6;
+                if (n.includes('sambal')) return 7;
+                return 10; 
             } else {
                 if (n.includes('air mineral')) return 1;
                 if (n.includes('buah') || n.includes('melon') || n.includes('semangka') || k.includes('buah')) return 2;
                 if (n.includes('tea') || n.includes('teh') || n.includes('juice') || n.includes('jus') || n.includes('coffee') || n.includes('kopi')) return 3;
+                if (n.includes('ice cream') || n.includes('puding') || n.includes('dessert')) return 99; 
                 return 10;
             }
         }
         
-// [PATCH A] Strict Deduplication Sorting Engine
         function applyBEOSorting(orders) {
             let sorted = orders.sort((a, b) => a.weight - b.weight);
             let result = [];
@@ -5442,28 +5872,29 @@
                     stallAdded = true;
                 }
                 
-                // 1. Bypass deduplication for special elements (Separators and Package Headers)
                 if (o.isSeparator || o.weight === 0) {
                     result.push(o);
                     return;
                 }
 
-                // 2. Sanitize item name for strict comparison
-                // Removes bullets, extra spaces, and normalizes case
-                let cleanName = (o.item || '')
-                    .replace(/[•\u2022]/g, '') // Strip bullet points
-                    .trim()
-                    .toLowerCase();
+                let cleanName = (o.item || '').replace(/[\u2022]/g, '').trim().toLowerCase();
                 
-                // 3. Strict Deduplication Check
                 if (!seen.has(cleanName)) {
                     seen.add(cleanName);
                     result.push(o);
                 }
             });
-            
             return result;
         }
+
+        function isKitchenItem(itemName, category) {
+            const name = (itemName || '').toLowerCase();
+            const cat = (category || '').toLowerCase();
+            if (PANTRY_KEYWORDS.some(w => name.includes(w) || cat.includes(w))) return false;
+            if (KITCHEN_KEYWORDS.some(w => name.includes(w) || cat.includes(w))) return true;
+            return true; // default to kitchen if unknown
+        }
+
 
         function fmtIDR(n) { return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID'); }
 
@@ -5580,7 +6011,7 @@
             const pantryEl = document.getElementById('beoPantryItems');
             kitchenEl.innerHTML = '';
             pantryEl.innerHTML = '';
-// [PATCH B] Sorted BEO UI Rendering
+            // [PATCH B] Sorted & Deduplicated BEO UI Rendering
             if (r.menuOrders && r.menuOrders.length) {
                 let kRaw = [], pRaw = [];
                 r.menuOrders.forEach(o => {
@@ -5623,7 +6054,7 @@
                 });
 
                 const renderHtml = (arr) => applyBEOSorting(arr).map(x => 
-                    x.isSeparator ? `<div class="py-2 text-center text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-stone-50 mt-2">${x.item}</div>` :
+                    x.isSeparator ? `<div class="py-2 text-center text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-stone-50 mt-3 rounded">${x.item}</div>` :
                     `<div class="flex justify-between py-0.5 border-b border-stone-50 text-sm pl-1 ${x.weight === 0 ? 'font-bold italic text-stone-800' : 'text-stone-600'}"><span>${x.item}</span><span class="font-mono text-stone-400 ml-4">x${x.quantity}</span></div>`
                 ).join('');
 
@@ -5730,15 +6161,14 @@
             }, !download);
         };
 
-// [PATCH C] Compact 1-Page A4 PDF Layout
+        // [PATCH C] Compact 1-Page 2-Column PDF Layout
         function generateBEOPDF(b, previewOnly = false) {
             const jp = window.jspdf || window;
             if (!jp.jsPDF) { alert('jsPDF tidak tersedia.'); return; }
             const doc = new jp.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const pw = 210, mg = 12; // Reduced margin
+            const pw = 210, mg = 12; 
             let y = 10;
 
-            // Header
             doc.setFillColor(34, 197, 94); doc.rect(0, 0, pw, 20, 'F');
             doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
             doc.text('DETUIK RESTO', mg, 9);
@@ -5749,7 +6179,6 @@
             doc.text(new Date().toLocaleDateString('id-ID'), pw - mg, 14, { align: 'right' });
             doc.setTextColor(0, 0, 0); y = 24;
 
-            // Event info (Compact)
             doc.setFillColor(254, 240, 138); doc.rect(mg, y, pw - 2 * mg, 6, 'F');
             doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
             doc.text('INFORMASI EVENT', mg + 2, y + 4); y += 7;
@@ -5767,10 +6196,9 @@
                 doc.setFont('helvetica', 'normal'); doc.text(': ' + row[1], mg + cw * 0.7, y + 3.5);
                 doc.setFont('helvetica', 'bold'); doc.text(row[2], mg + cw * 2 + 1, y + 3.5);
                 doc.setFont('helvetica', 'normal'); doc.text(': ' + row[3], mg + cw * 2 + cw * 0.7, y + 3.5);
-                doc.setDrawColor(220, 220, 220); doc.line(mg, y + 5, pw - mg, y + 5); y += 5.5;
+                doc.setDrawColor(230, 230, 230); doc.line(mg, y + 5, pw - mg, y + 5); y += 5.5;
             }); y += 2;
 
-            // Data Prep & Sorting
             let kRaw = [], pRaw = [];
             (b.menuOrders || []).forEach(o => {
                 const itemData = findMenuItemData(o.item);
@@ -5779,8 +6207,10 @@
                 if (isSpecial) {
                     kRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
                     pRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                    
                     if (itemData.fixedItems.kitchen) itemData.fixedItems.kitchen.forEach(k => kRaw.push({ item: `\u2022 ${k}`, quantity: o.quantity || 1, weight: getBEOWeight('kitchen', k, '') }));
                     if (itemData.fixedItems.pantry) itemData.fixedItems.pantry.forEach(p => pRaw.push({ item: `\u2022 ${p}`, quantity: o.quantity || 1, weight: getBEOWeight('pantry', p, '') }));
+                    
                     if (o.subSelections) {
                         Object.entries(o.subSelections).forEach(([subKey, sels]) => {
                             sels.forEach(sel => {
@@ -5809,7 +6239,6 @@
             const kOrders = applyBEOSorting(kRaw);
             const pOrders = applyBEOSorting(pRaw);
 
-            // 2-Column List Render
             const colW = (pw - 2 * mg - 4) / 2;
             let kY = y, pY = y;
 
@@ -5818,21 +6247,23 @@
                 doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
                 doc.text(title + (time ? ' \u00b7 ' + time : ''), x + 2, startY + 3.5);
                 let currY = startY + 6;
+                
                 if (!orders.length) {
                     doc.setFont('helvetica', 'italic'); doc.setTextColor(150); doc.text('Tidak ada item', x + 2, currY + 3); doc.setTextColor(0); currY += 5;
                 } else {
                     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
                     orders.forEach(o => {
-                        if (currY > 260) { doc.addPage(); currY = 15; } // Page break safety
+                        if (currY > 260) { doc.addPage(); currY = 15; } 
+                        
                         if (o.isSeparator) {
-                            currY += 1; doc.setFont('helvetica', 'bold'); doc.setTextColor(100);
+                            currY += 1; doc.setFont('helvetica', 'bold'); doc.setTextColor(150);
                             doc.text(o.item, x + colW/2, currY + 3, {align: 'center'});
                             doc.setFont('helvetica', 'normal'); doc.setTextColor(0); currY += 4.5;
                         } else {
                             if(o.weight === 0) doc.setFont('helvetica', 'bold'); else doc.setFont('helvetica', 'normal');
                             doc.text(o.item, x + 2, currY + 3.5);
                             doc.text('' + o.quantity, x + colW - 2, currY + 3.5, { align: 'right' });
-                            doc.setDrawColor(230); doc.line(x, currY + 4.5, x + colW, currY + 4.5);
+                            doc.setDrawColor(240); doc.line(x, currY + 4.5, x + colW, currY + 4.5);
                             currY += 5;
                         }
                     });
@@ -5840,12 +6271,11 @@
                 return currY + 2;
             }
 
-            kY = drawCompactList('KITCHEN', kOrders, b.kitchenTime, [255, 237, 213], mg, y);
+            kY = drawCompactList('KITCHEN', kOrders, b.kitchenTime, [254, 243, 199], mg, y);
             pY = drawCompactList('PANTRY', pOrders, b.pantryTime, [219, 234, 254], mg + colW + 4, y);
 
             y = Math.max(kY, pY) + 3;
 
-            // 2-Column Operational Notes
             const opsLeft = [['SERVICE', b.service], ['SANITATION', b.sanitation], ['LANDSCAPE', b.landscape]];
             const opsRight = [['ENGINEERING', b.engineering], ['SECURITY', b.security]];
             let opYLeft = y, opYRight = y;
@@ -5867,7 +6297,6 @@
 
             y = Math.max(opYLeft, opYRight) + 3;
 
-            // Cashier box (Compact)
             if (y > 250) { doc.addPage(); y = 15; }
             const grandTotal = Math.round(b.menuTotal || 0), dp = parseInt(b.dp || 0), sisa = Math.max(0, grandTotal - dp);
             doc.setFillColor(220, 252, 231); doc.rect(mg, y, colW, 18, 'F');
@@ -5881,7 +6310,6 @@
             doc.text('Sisa:', mg + 2, y + 16.5); doc.text('Rp ' + sisa.toLocaleString('id-ID'), mg + colW - 2, y + 16.5, { align: 'right' });
             doc.setTextColor(0, 0, 0); 
 
-            // Signatures aligned with Cashier
             const sigX = mg + colW + 4;
             const sigW = colW / 3;
             doc.setFontSize(7); doc.setFont('helvetica', 'normal');
@@ -5891,7 +6319,6 @@
                 doc.setDrawColor(150); doc.line(sx - 12, y + 16, sx + 12, y + 16);
             });
 
-            // Footer
             doc.setFillColor(34, 197, 94); doc.rect(0, 289, pw, 8, 'F');
             doc.setFontSize(6.5); doc.setTextColor(255, 255, 255);
             doc.text('Detuik Resto \u00b7 Banquet Event Order \u00b7 Dokumen Internal', pw / 2, 294, { align: 'center' });
@@ -6206,11 +6633,10 @@
                 }
             }
 
-            // [PATCH B] Non-Destructive Deep Merge Save
+            // [PATCH D] Non-Destructive Deep Merge Save
             let updatedMenus = JSON.parse(JSON.stringify(menuCategories)); // Clone
             if (!updatedMenus[cat]) updatedMenus[cat] = [];
 
-            // 1. Find existing menu to preserve special properties (like fixedItems, kitchenChoices)
             let existingMenu = {};
             if (oldCat && oldName && updatedMenus[oldCat]) {
                 const found = updatedMenus[oldCat].find(m => (typeof m === 'string' ? m : m.name) === oldName);
@@ -6219,19 +6645,16 @@
                 }
             }
 
-            // 2. Create or update menu object preserving old properties
             const menuObj = { ...existingMenu, name: name, price: price };
-
-            // 3. Apply modifiers securely
+            
             if (Object.keys(subOptionsConfig).length > 0) {
                 menuObj.subOptions = subOptionsConfig;
-                delete menuObj.options; // Clean up legacy options if migrated
+                delete menuObj.options; 
             } else {
                 delete menuObj.subOptions;
                 delete menuObj.options;
             }
 
-            // 4. Save back to the array handling string/object formatting
             if (oldCat && oldName) {
                 if (oldCat !== cat) {
                     updatedMenus[cat].push(menuObj);
@@ -6249,22 +6672,23 @@
             // SIMPAN KE FIREBASE
             database.ref(CLIENT_CONFIG.tenant.id + '/settings/menus').set(updatedMenus)
                 .then(() => {
-                    // 1. Reset the form
-                    const menuForm = document.getElementById('boMenuForm') || document.querySelector('form[onsubmit*="Menu"]');
-                    if (menuForm) menuForm.reset();
-
-                    // 2. Close the modal
-                    const menuModal = document.getElementById('boMenuModal') || document.getElementById('modalMenu');
-                    if (menuModal) menuModal.classList.add('hidden');
-
-                    // 3. Let the real-time listener (.on('value')) handle the UI update automatically.
-                    // DO NOT manually push to the array or call render functions here.
+                    closeMenuModal();
                     alert('✅ Menu berhasil disinkronkan ke Database!');
                 }).catch(e => alert('Error: ' + e.message));
         };
 
+        window.editMenu = function (cat, name) { openMenuModal(cat, name); };
+        window.deleteMenu = function (cat, name) {
+            if (confirm('Yakin ingin menghapus Menu ini?')) {
+                let updatedMenus = JSON.parse(JSON.stringify(menuCategories));
+                updatedMenus[cat] = updatedMenus[cat].filter(m => m.name !== name);
+                if (updatedMenus[cat].length === 0) delete updatedMenus[cat];
+                database.ref(CLIENT_CONFIG.tenant.id + '/settings/menus').set(updatedMenus);
+            }
+        };
+
         // [PATCH A] Back-Office Menu Renderer
-        window.renderBackOfficeMenus = function () {
+        window.renderBackOfficeMenus = function() {
             const tbody = document.getElementById('boMenuTableBody');
             const filterEl = document.getElementById('boMenuCategoryFilter');
             if (!tbody) return;
@@ -6279,7 +6703,6 @@
                     opt.textContent = cat;
                     filterEl.appendChild(opt);
                 });
-                // Restore selection if category still exists
                 filterEl.value = Object.keys(menuCategories).includes(currentFilter) ? currentFilter : 'all';
             }
 
@@ -6293,16 +6716,15 @@
 
                 items.forEach(menu => {
                     hasData = true;
-                    // Handle both string format and object format
                     const menuName = typeof menu === 'string' ? menu : menu.name;
                     const menuPrice = typeof menu === 'string' ? 0 : (menu.price || 0);
 
                     const tr = document.createElement('tr');
-                    tr.className = "hover:bg-emerald-50/50 transition-colors";
+                    tr.className = "hover:bg-emerald-50/50 transition-colors border-b border-emerald-900/10";
                     tr.innerHTML = `
                         <td class="px-6 py-4 font-bold text-emerald-900">${cat}</td>
                         <td class="px-6 py-4">${menuName}</td>
-                        <td class="px-6 py-4 font-mono text-stone-600">${typeof formatRP === 'function' ? formatRP(menuPrice) : 'Rp ' + menuPrice}</td>
+                        <td class="px-6 py-4 font-mono text-stone-600">Rp ${menuPrice.toLocaleString('id-ID')}</td>
                         <td class="px-6 py-4 text-center space-x-2">
                             <button onclick="editMenu('${cat}', '${menuName}')" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold px-2 py-1 bg-emerald-50 rounded">Edit</button>
                             <button onclick="deleteMenu('${cat}', '${menuName}')" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 bg-red-50 rounded">Hapus</button>
@@ -6316,7 +6738,7 @@
                 tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-stone-400 italic">Tidak ada menu ditemukan.</td></tr>';
             }
 
-            // 3. Update datalist for "Tambah Menu" modal dynamically
+            // 3. Update datalist for "Tambah Menu" modal
             const dataList = document.getElementById('boCategoryList');
             if (dataList) {
                 dataList.innerHTML = '';
@@ -6328,17 +6750,6 @@
             }
         };
 
-        window.editMenu = function (cat, name) { openMenuModal(cat, name); };
-        window.deleteMenu = function (cat, name) {
-            if (confirm('Yakin ingin menghapus Menu ini?')) {
-                let updatedMenus = JSON.parse(JSON.stringify(menuCategories));
-                updatedMenus[cat] = updatedMenus[cat].filter(m => m.name !== name);
-                if (updatedMenus[cat].length === 0) delete updatedMenus[cat];
-                database.ref(CLIENT_CONFIG.tenant.id + '/settings/menus').set(updatedMenus);
-            }
-        };
-
-        // ============================================================================
         // 🛒 USP 2: SMART KITCHEN PREDICTOR (Auto-Shopping List)
         // ============================================================================
         window.openShoppingListModal = function () {
@@ -6430,31 +6841,6 @@
         }
 
     </script>
-
-    <!-- INJEKSI: Mobile Bottom Navigation -->
-    <nav
-        class="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-md border-t border-emerald-900/10 flex justify-around p-3 z-[60] shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
-        <button onclick="switchView('home')" id="mobile-nav-home"
-            class="flex flex-col items-center gap-1 text-emerald-900/40 active:text-emerald-600 transition-colors">
-            <span class="text-xl">🏠</span>
-            <span class="text-[9px] font-bold uppercase tracking-tighter">Home</span>
-        </button>
-        <button onclick="switchView('reservation')" id="mobile-nav-reservation"
-            class="flex flex-col items-center gap-1 text-emerald-900/40">
-            <span class="text-xl">📅</span>
-            <span class="text-[9px] font-bold uppercase tracking-tighter">Reservasi</span>
-        </button>
-        <button onclick="switchView('menu')" id="mobile-nav-menu"
-            class="flex flex-col items-center gap-1 text-emerald-900/40">
-            <span class="text-xl">📋</span>
-            <span class="text-[9px] font-bold uppercase tracking-tighter">BEO</span>
-        </button>
-        <button onclick="switchView('settings')" id="mobile-nav-settings"
-            class="flex flex-col items-center gap-1 text-emerald-900/40">
-            <span class="text-xl">⚙️</span>
-            <span class="text-[9px] font-bold uppercase tracking-tighter">Set</span>
-        </button>
-    </nav>
 </body>
 
 </html>
