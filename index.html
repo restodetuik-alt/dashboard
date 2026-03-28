@@ -2663,16 +2663,26 @@
                 if (snapshot.exists()) {
                     const payload = snapshot.val();
 
-                    // Hydrate Global Memory
-                    window.menuCategories = payload;
+                    // [PATCH A] Hydrate Local Memory correctly (removing window. prefix)
+                    menuCategories = payload;
+                    window.menuCategories = payload; // Keep window binding just in case other scripts rely on it
 
                     // Update Local Storage Cache
                     localStorage.setItem('menuCategories', JSON.stringify(payload));
 
-                    // Trigger UI Re-render specific to current view
+                    // [PATCH B.2] Trigger UI Re-render specific to current view
                     if (typeof renderBackOfficeMenus === 'function') renderBackOfficeMenus();
                     if (typeof loadMenuDropdown === 'function') loadMenuDropdown();
                     if (typeof updateDashboard === 'function') updateDashboard();
+
+                    // NEW: Auto-refresh the Order Entry UI if Kasir is currently viewing it
+                    const activeResSelect = document.getElementById('menuReservationSelect');
+                    if (activeResSelect && activeResSelect.value) {
+                        if (typeof loadMenuForReservation === 'function') {
+                            console.log('🔄 Live Menu Update: Refreshing active order form...');
+                            loadMenuForReservation();
+                        }
+                    }
                 }
             });
 
@@ -5384,8 +5394,9 @@
         // ============================================================
 
         let beoList = {};
-        const KITCHEN_KEYWORDS = ['nasi', 'ayam', 'sapi', 'kambing', 'ikan', 'udang', 'cumi', 'tempe', 'tahu', 'sayur', 'salad', 'soup', 'sup', 'sop', 'bakso', 'mie', 'pasta', 'roti', 'sandwich', 'burger', 'snack', 'cake', 'pudding', 'dessert'];
-        const PANTRY_KEYWORDS = ['kopi', 'coffee', 'teh', 'tea', 'juice', 'jus', 'air', 'minum', 'drink', 'soda', 'es', 'susu', 'milk', 'sirup', 'syrup', 'lemonade', 'float'];
+// [PATCH A] Expanded Smart Detection Keywords
+        const KITCHEN_KEYWORDS = ['nasi', 'ayam', 'sapi', 'kambing', 'ikan', 'udang', 'cumi', 'tempe', 'tahu', 'tofu', 'sayur', 'salad', 'soup', 'sup', 'sop', 'bakso', 'mie', 'pasta', 'roti', 'sandwich', 'burger', 'snack', 'cake', 'lauk', 'tumis', 'tumisan', 'dimsum', 'kerupuk', 'sambal', 'beef', 'chicken', 'kakap', 'seafood'];
+        const PANTRY_KEYWORDS = ['kopi', 'coffee', 'teh', 'tea', 'juice', 'jus', 'air', 'minum', 'drink', 'soda', 'es', 'susu', 'milk', 'sirup', 'syrup', 'lemonade', 'float', 'ice cream', 'buah', 'melon', 'semangka', 'pudding', 'dessert'];
 
         function isKitchenItem(itemName, category) {
             const name = (itemName || '').toLowerCase();
@@ -5395,6 +5406,64 @@
             return true; // default to kitchen if unknown
         }
 
+        // [PATCH A] BEO Sorting Helpers
+        function getBEOWeight(type, name, subKey) {
+            const n = (name || '').toLowerCase();
+            const k = (subKey || '').toLowerCase();
+            
+            if (k.includes('stall')) return 99; // Stall always last
+            
+            if (type === 'kitchen') {
+                if (n.includes('nasi putih')) return 1;
+                if (n.includes('sop') || n.includes('sup') || k.includes('soup')) return 2;
+                if (k.includes('lauk') || n.includes('ayam') || n.includes('beef') || n.includes('ikan') || n.includes('kakap')) return 3;
+                if (k.includes('tumis') || n.includes('cah') || n.includes('capcay') || n.includes('sayur')) return 4;
+                if (n.includes('kerupuk')) return 5;
+                if (n.includes('sambal')) return 6;
+                return 10; // Default middle
+            } else {
+                if (n.includes('air mineral')) return 1;
+                if (n.includes('buah') || n.includes('melon') || n.includes('semangka') || k.includes('buah')) return 2;
+                if (n.includes('tea') || n.includes('teh') || n.includes('juice') || n.includes('jus') || n.includes('coffee') || n.includes('kopi')) return 3;
+                return 10;
+            }
+        }
+        
+// [PATCH A] Strict Deduplication Sorting Engine
+        function applyBEOSorting(orders) {
+            let sorted = orders.sort((a, b) => a.weight - b.weight);
+            let result = [];
+            let stallAdded = false;
+            let seen = new Set();
+            
+            sorted.forEach(o => {
+                if (o.weight >= 99 && !stallAdded && !o.isSeparator) {
+                    result.push({ item: '--- STALL / LIVE ---', quantity: '', isSeparator: true, weight: 98 });
+                    stallAdded = true;
+                }
+                
+                // 1. Bypass deduplication for special elements (Separators and Package Headers)
+                if (o.isSeparator || o.weight === 0) {
+                    result.push(o);
+                    return;
+                }
+
+                // 2. Sanitize item name for strict comparison
+                // Removes bullets, extra spaces, and normalizes case
+                let cleanName = (o.item || '')
+                    .replace(/[•\u2022]/g, '') // Strip bullet points
+                    .trim()
+                    .toLowerCase();
+                
+                // 3. Strict Deduplication Check
+                if (!seen.has(cleanName)) {
+                    seen.add(cleanName);
+                    result.push(o);
+                }
+            });
+            
+            return result;
+        }
 
         function fmtIDR(n) { return 'Rp ' + Math.round(n || 0).toLocaleString('id-ID'); }
 
@@ -5511,57 +5580,55 @@
             const pantryEl = document.getElementById('beoPantryItems');
             kitchenEl.innerHTML = '';
             pantryEl.innerHTML = '';
+// [PATCH B] Sorted BEO UI Rendering
             if (r.menuOrders && r.menuOrders.length) {
-                let kLines = [], pLines = [];
+                let kRaw = [], pRaw = [];
                 r.menuOrders.forEach(o => {
                     const itemData = findMenuItemData(o.item);
                     const isSpecial = itemData && typeof itemData === 'object' && itemData.fixedItems;
 
                     if (isSpecial) {
-                        // Main header
-                        kLines.push(`<div class="flex justify-between py-0.5 border-b border-stone-100 font-semibold italic text-stone-600"><span>[ ${o.item} ]</span><span class="font-mono text-stone-500 ml-4">x${o.quantity || 1}</span></div>`);
-                        pLines.push(`<div class="flex justify-between py-0.5 border-b border-stone-100 font-semibold italic text-stone-600"><span>[ ${o.item} ]</span><span class="font-mono text-stone-500 ml-4">x${o.quantity || 1}</span></div>`);
+                        kRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                        pRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
 
-                        // Fixed Kitchen
-                        if (itemData.fixedItems.kitchen) {
-                            itemData.fixedItems.kitchen.forEach(k => kLines.push(`<div class="flex justify-between py-0.5 border-b border-stone-50 text-sm pl-3 text-stone-600"><span>&bull; ${k}</span><span class="font-mono text-stone-400 ml-4">x${o.quantity || 1}</span></div>`));
-                        }
-                        // Fixed Pantry
-                        if (itemData.fixedItems.pantry) {
-                            itemData.fixedItems.pantry.forEach(p => pLines.push(`<div class="flex justify-between py-0.5 border-b border-stone-50 text-sm pl-3 text-stone-600"><span>&bull; ${p}</span><span class="font-mono text-stone-400 ml-4">x${o.quantity || 1}</span></div>`));
-                        }
+                        if (itemData.fixedItems.kitchen) itemData.fixedItems.kitchen.forEach(k => kRaw.push({ item: `\u2022 ${k}`, quantity: o.quantity || 1, weight: getBEOWeight('kitchen', k, '') }));
+                        if (itemData.fixedItems.pantry) itemData.fixedItems.pantry.forEach(p => pRaw.push({ item: `\u2022 ${p}`, quantity: o.quantity || 1, weight: getBEOWeight('pantry', p, '') }));
 
-                        // Distribute SubSelections
                         if (o.subSelections) {
                             Object.entries(o.subSelections).forEach(([subKey, sels]) => {
-                                const isKitchenChoice = itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey);
                                 sels.forEach(sel => {
                                     if (sel.qty > 0 && sel.choice && !sel.choice.includes("Kosong")) {
-                                        const targetArr = isKitchenChoice ? kLines : pLines;
-                                        targetArr.push(`<div class="flex justify-between py-0.5 border-b border-stone-50 text-sm pl-3 text-stone-600"><span>&bull; ${sel.choice}</span><span class="font-mono text-stone-400 ml-4">x${sel.qty}</span></div>`);
+                                        let isK = true;
+                                        if (itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
+                                        else if (itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
+                                        else isK = isKitchenItem(sel.choice, subKey);
+                                        
+                                        const targetArr = isK ? kRaw : pRaw;
+                                        targetArr.push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', sel.choice, subKey) });
                                     }
                                 });
                             });
                         }
                     } else {
-                        // Normal item
                         const isK = isKitchenItem(o.item, itemData ? itemData.category : '');
-                        const targetArr = isK ? kLines : pLines;
-
+                        const targetArr = isK ? kRaw : pRaw;
                         let itemName = o.item;
                         if (o.subSelections) {
                             let subParts = [];
-                            Object.entries(o.subSelections).forEach(([_, sels]) => {
-                                sels.filter(s => s.qty > 0 && s.choice).forEach(s => subParts.push(`${s.qty} ${s.choice}`));
-                            });
+                            Object.entries(o.subSelections).forEach(([_, sels]) => sels.filter(s => s.qty > 0 && s.choice).forEach(s => subParts.push(`${s.qty} ${s.choice}`)));
                             if (subParts.length) itemName += ` <span class="text-xs text-stone-400">(${subParts.join(', ')})</span>`;
                         }
-
-                        targetArr.push(`<div class="flex justify-between py-0.5 border-b border-stone-100"><span>${itemName}</span><span class="font-mono text-stone-500 ml-4">x${o.quantity || 1}</span></div>`);
+                        targetArr.push({ item: itemName, quantity: o.quantity || 1, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', o.item, '') });
                     }
                 });
-                kitchenEl.innerHTML = kLines.length ? kLines.join('') : '<span class="italic text-stone-400">Tidak ada makanan</span>';
-                pantryEl.innerHTML = pLines.length ? pLines.join('') : '<span class="italic text-stone-400">Tidak ada minuman</span>';
+
+                const renderHtml = (arr) => applyBEOSorting(arr).map(x => 
+                    x.isSeparator ? `<div class="py-2 text-center text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-stone-50 mt-2">${x.item}</div>` :
+                    `<div class="flex justify-between py-0.5 border-b border-stone-50 text-sm pl-1 ${x.weight === 0 ? 'font-bold italic text-stone-800' : 'text-stone-600'}"><span>${x.item}</span><span class="font-mono text-stone-400 ml-4">x${x.quantity}</span></div>`
+                ).join('');
+
+                kitchenEl.innerHTML = kRaw.length ? renderHtml(kRaw) : '<span class="italic text-stone-400">Tidak ada makanan</span>';
+                pantryEl.innerHTML = pRaw.length ? renderHtml(pRaw) : '<span class="italic text-stone-400">Tidak ada minuman</span>';
             } else {
                 kitchenEl.innerHTML = '<span class="italic text-stone-400">Belum ada pesanan menu</span>';
                 pantryEl.innerHTML = '<span class="italic text-stone-400">Belum ada pesanan menu</span>';
@@ -5663,171 +5730,171 @@
             }, !download);
         };
 
+// [PATCH C] Compact 1-Page A4 PDF Layout
         function generateBEOPDF(b, previewOnly = false) {
             const jp = window.jspdf || window;
             if (!jp.jsPDF) { alert('jsPDF tidak tersedia.'); return; }
             const doc = new jp.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const pw = 210, mg = 14;
+            const pw = 210, mg = 12; // Reduced margin
             let y = 10;
 
             // Header
-            doc.setFillColor(34, 197, 94); doc.rect(0, 0, pw, 22, 'F');
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(15); doc.setTextColor(255, 255, 255);
-            doc.text('DETUIK RESTO', mg, 10);
-            doc.setFontSize(9); doc.setFont('helvetica', 'normal');
-            doc.text('BANQUET EVENT ORDER', mg, 16);
+            doc.setFillColor(34, 197, 94); doc.rect(0, 0, pw, 20, 'F');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(14); doc.setTextColor(255, 255, 255);
+            doc.text('DETUIK RESTO', mg, 9);
+            doc.setFontSize(8); doc.setFont('helvetica', 'normal');
+            doc.text('BANQUET EVENT ORDER', mg, 14);
             const beoNo = 'BEO-' + Date.now().toString().slice(-6);
-            doc.text(beoNo, pw - mg, 10, { align: 'right' });
-            doc.text(new Date().toLocaleDateString('id-ID'), pw - mg, 16, { align: 'right' });
-            doc.setTextColor(0, 0, 0); y = 28;
+            doc.text(beoNo, pw - mg, 9, { align: 'right' });
+            doc.text(new Date().toLocaleDateString('id-ID'), pw - mg, 14, { align: 'right' });
+            doc.setTextColor(0, 0, 0); y = 24;
 
-            // Event info
-            doc.setFillColor(254, 240, 138); doc.rect(mg, y, pw - 2 * mg, 7, 'F');
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-            doc.text('INFORMASI EVENT', mg + 2, y + 5); y += 8;
+            // Event info (Compact)
+            doc.setFillColor(254, 240, 138); doc.rect(mg, y, pw - 2 * mg, 6, 'F');
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+            doc.text('INFORMASI EVENT', mg + 2, y + 4); y += 7;
 
             const cw = (pw - 2 * mg) / 4;
             const rows = [
                 ['Nama PIC', b.pic || '-', 'Jenis Acara', b.eventType || '-'],
-                ['No. Kontak', b.contact || '-', 'Layout', (b.layout || '-') + (b.layoutNotes ? ' - ' + b.layoutNotes : '')],
-                ['Area', b.area || '-', 'Jumlah Tamu', (b.pax || 0) + ' Pax'],
-                ['Tgl Acara', b.eventDate || '-', 'Waktu', b.timeStart ? (b.timeStart + (b.timeEnd ? ' \u2013 ' + b.timeEnd : '')) : '- '],
+                ['Kontak', b.contact || '-', 'Layout', (b.layout || '-') + (b.layoutNotes ? ' - ' + b.layoutNotes : '')],
+                ['Area', b.area || '-', 'Jml Tamu', (b.pax || 0) + ' Pax'],
+                ['Tanggal', b.eventDate || '-', 'Waktu', b.timeStart ? (b.timeStart + (b.timeEnd ? ' \u2013 ' + b.timeEnd : '')) : '- '],
             ];
-            doc.setFontSize(8);
+            doc.setFontSize(7.5);
             rows.forEach(row => {
-                doc.setFont('helvetica', 'bold'); doc.text(row[0], mg + 1, y + 4);
-                doc.setFont('helvetica', 'normal'); doc.text(': ' + row[1], mg + cw * 0.85, y + 4);
-                doc.setFont('helvetica', 'bold'); doc.text(row[2], mg + cw * 2 + 1, y + 4);
-                doc.setFont('helvetica', 'normal'); doc.text(': ' + row[3], mg + cw * 2 + cw * 0.85, y + 4);
-                doc.setDrawColor(200, 200, 200); doc.line(mg, y + 6, pw - mg, y + 6); y += 7;
-            }); y += 3;
+                doc.setFont('helvetica', 'bold'); doc.text(row[0], mg + 1, y + 3.5);
+                doc.setFont('helvetica', 'normal'); doc.text(': ' + row[1], mg + cw * 0.7, y + 3.5);
+                doc.setFont('helvetica', 'bold'); doc.text(row[2], mg + cw * 2 + 1, y + 3.5);
+                doc.setFont('helvetica', 'normal'); doc.text(': ' + row[3], mg + cw * 2 + cw * 0.7, y + 3.5);
+                doc.setDrawColor(220, 220, 220); doc.line(mg, y + 5, pw - mg, y + 5); y += 5.5;
+            }); y += 2;
 
-            // Kitchen / Pantry Distribution
-            const kOrders = [];
-            const pOrders = [];
-
+            // Data Prep & Sorting
+            let kRaw = [], pRaw = [];
             (b.menuOrders || []).forEach(o => {
                 const itemData = findMenuItemData(o.item);
                 const isSpecial = itemData && typeof itemData === 'object' && itemData.fixedItems;
 
                 if (isSpecial) {
-                    // Push the main header (Optional, just to let Kitchen/Pantry know it's a package)
-                    kOrders.push({ item: `[ ${o.item} ]`, quantity: o.quantity });
-                    pOrders.push({ item: `[ ${o.item} ]`, quantity: o.quantity });
-
-                    // Fixed Kitchen
-                    if (itemData.fixedItems.kitchen) {
-                        itemData.fixedItems.kitchen.forEach(k => kOrders.push({ item: `\u2022 ${k}`, quantity: o.quantity }));
-                    }
-                    // Fixed Pantry
-                    if (itemData.fixedItems.pantry) {
-                        itemData.fixedItems.pantry.forEach(p => pOrders.push({ item: `\u2022 ${p}`, quantity: o.quantity }));
-                    }
-
-                    // Distribute SubSelections
+                    kRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                    pRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                    if (itemData.fixedItems.kitchen) itemData.fixedItems.kitchen.forEach(k => kRaw.push({ item: `\u2022 ${k}`, quantity: o.quantity || 1, weight: getBEOWeight('kitchen', k, '') }));
+                    if (itemData.fixedItems.pantry) itemData.fixedItems.pantry.forEach(p => pRaw.push({ item: `\u2022 ${p}`, quantity: o.quantity || 1, weight: getBEOWeight('pantry', p, '') }));
                     if (o.subSelections) {
                         Object.entries(o.subSelections).forEach(([subKey, sels]) => {
-                            const isKitchenChoice = itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey);
                             sels.forEach(sel => {
                                 if (sel.qty > 0 && sel.choice && !sel.choice.includes("Kosong")) {
-                                    const targetArr = isKitchenChoice ? kOrders : pOrders;
-                                    targetArr.push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty });
+                                    let isK = true;
+                                    if (itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
+                                    else if (itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
+                                    else isK = isKitchenItem(sel.choice, subKey);
+                                    (isK ? kRaw : pRaw).push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', sel.choice, subKey) });
                                 }
                             });
                         });
                     }
                 } else {
-                    // Normal item logic
                     const isK = isKitchenItem(o.item, itemData ? itemData.category : '');
-                    const targetArr = isK ? kOrders : pOrders;
-
                     let itemName = o.item;
                     if (o.subSelections) {
                         let subParts = [];
-                        Object.entries(o.subSelections).forEach(([_, sels]) => {
-                            sels.filter(s => s.qty > 0 && s.choice).forEach(s => subParts.push(`${s.qty} ${s.choice}`));
-                        });
+                        Object.entries(o.subSelections).forEach(([_, sels]) => sels.filter(s => s.qty > 0 && s.choice).forEach(s => subParts.push(`${s.qty} ${s.choice}`)));
                         if (subParts.length) itemName += ` (${subParts.join(', ')})`;
                     }
-
-                    targetArr.push({ item: itemName, quantity: o.quantity });
+                    (isK ? kRaw : pRaw).push({ item: itemName, quantity: o.quantity || 1, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', o.item, '') });
                 }
             });
 
-            function drawSection(title, orders, time, fill) {
-                if (y > 255) { doc.addPage(); y = 15; }
-                doc.setFillColor(...fill); doc.rect(mg, y, pw - 2 * mg, 7, 'F');
-                doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-                doc.text(title + (time ? ' \u00b7 Waktu: ' + time : ''), mg + 2, y + 5); y += 8;
-                doc.setFontSize(8);
+            const kOrders = applyBEOSorting(kRaw);
+            const pOrders = applyBEOSorting(pRaw);
+
+            // 2-Column List Render
+            const colW = (pw - 2 * mg - 4) / 2;
+            let kY = y, pY = y;
+
+            function drawCompactList(title, orders, time, fill, x, startY) {
+                doc.setFillColor(...fill); doc.rect(x, startY, colW, 5, 'F');
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+                doc.text(title + (time ? ' \u00b7 ' + time : ''), x + 2, startY + 3.5);
+                let currY = startY + 6;
                 if (!orders.length) {
-                    doc.setFont('helvetica', 'italic'); doc.setTextColor(150, 150, 150);
-                    doc.text('Tidak ada item', mg + 2, y + 4); doc.setTextColor(0, 0, 0); y += 7;
+                    doc.setFont('helvetica', 'italic'); doc.setTextColor(150); doc.text('Tidak ada item', x + 2, currY + 3); doc.setTextColor(0); currY += 5;
                 } else {
-                    doc.setFont('helvetica', 'bold'); doc.setFillColor(245, 245, 245);
-                    doc.rect(mg, y, pw - 2 * mg, 6, 'F');
-                    doc.text('No', mg + 2, y + 4); doc.text('Item', mg + 12, y + 4); doc.text('Qty', pw - mg - 8, y + 4, { align: 'right' });
-                    doc.setDrawColor(200, 200, 200); doc.line(mg, y + 6, pw - mg, y + 6); y += 7;
-                    doc.setFont('helvetica', 'normal');
-                    orders.forEach((o, i) => {
-                        if (y > 270) { doc.addPage(); y = 15; }
-                        doc.text((i + 1) + '.', mg + 2, y + 4);
-                        doc.text(o.item || '', mg + 12, y + 4);
-                        doc.text('' + (o.quantity || 1), pw - mg - 8, y + 4, { align: 'right' });
-                        doc.line(mg, y + 6, pw - mg, y + 6); y += 7;
+                    doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
+                    orders.forEach(o => {
+                        if (currY > 260) { doc.addPage(); currY = 15; } // Page break safety
+                        if (o.isSeparator) {
+                            currY += 1; doc.setFont('helvetica', 'bold'); doc.setTextColor(100);
+                            doc.text(o.item, x + colW/2, currY + 3, {align: 'center'});
+                            doc.setFont('helvetica', 'normal'); doc.setTextColor(0); currY += 4.5;
+                        } else {
+                            if(o.weight === 0) doc.setFont('helvetica', 'bold'); else doc.setFont('helvetica', 'normal');
+                            doc.text(o.item, x + 2, currY + 3.5);
+                            doc.text('' + o.quantity, x + colW - 2, currY + 3.5, { align: 'right' });
+                            doc.setDrawColor(230); doc.line(x, currY + 4.5, x + colW, currY + 4.5);
+                            currY += 5;
+                        }
                     });
                 }
-                y += 3;
+                return currY + 2;
             }
-            drawSection('KITCHEN', kOrders, b.kitchenTime, [255, 237, 213]);
-            drawSection('PANTRY', pOrders, b.pantryTime, [219, 234, 254]);
 
-            // Operational sections
-            [['SERVICE', b.service], ['SANITATION', b.sanitation], ['LANDSCAPE', b.landscape], ['ENGINEERING', b.engineering], ['SECURITY', b.security]].forEach(([lbl, val]) => {
-                if (!val) return;
-                if (y > 255) { doc.addPage(); y = 15; }
-                doc.setFillColor(243, 244, 246); doc.rect(mg, y, pw - 2 * mg, 6, 'F');
-                doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5);
-                doc.text(lbl, mg + 2, y + 4); y += 7;
-                doc.setFont('helvetica', 'normal'); doc.setFontSize(8);
-                const lines = doc.splitTextToSize(val, pw - 2 * mg - 4);
-                doc.text(lines, mg + 2, y + 3); y += lines.length * 5 + 3;
-                doc.setDrawColor(200, 200, 200); doc.line(mg, y, pw - mg, y); y += 4;
-            });
+            kY = drawCompactList('KITCHEN', kOrders, b.kitchenTime, [255, 237, 213], mg, y);
+            pY = drawCompactList('PANTRY', pOrders, b.pantryTime, [219, 234, 254], mg + colW + 4, y);
 
-            // Cashier box
-            if (y > 240) { doc.addPage(); y = 15; }
-            y += 3;
+            y = Math.max(kY, pY) + 3;
+
+            // 2-Column Operational Notes
+            const opsLeft = [['SERVICE', b.service], ['SANITATION', b.sanitation], ['LANDSCAPE', b.landscape]];
+            const opsRight = [['ENGINEERING', b.engineering], ['SECURITY', b.security]];
+            let opYLeft = y, opYRight = y;
+
+            function drawOp(lbl, val, x, startY) {
+                if (!val) return startY;
+                if (startY > 260) { doc.addPage(); startY = 15; }
+                doc.setFillColor(243, 244, 246); doc.rect(x, startY, colW, 4.5, 'F');
+                doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
+                doc.text(lbl, x + 2, startY + 3); 
+                doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
+                const lines = doc.splitTextToSize(val, colW - 4);
+                doc.text(lines, x + 2, startY + 7); 
+                return startY + 8 + (lines.length * 3.5);
+            }
+
+            opsLeft.forEach(op => { opYLeft = drawOp(op[0], op[1], mg, opYLeft) + 2; });
+            opsRight.forEach(op => { opYRight = drawOp(op[0], op[1], mg + colW + 4, opYRight) + 2; });
+
+            y = Math.max(opYLeft, opYRight) + 3;
+
+            // Cashier box (Compact)
+            if (y > 250) { doc.addPage(); y = 15; }
             const grandTotal = Math.round(b.menuTotal || 0), dp = parseInt(b.dp || 0), sisa = Math.max(0, grandTotal - dp);
-            doc.setFillColor(220, 252, 231); doc.rect(mg, y, pw - 2 * mg, 28, 'F');
-            doc.setDrawColor(34, 197, 94); doc.rect(mg, y, pw - 2 * mg, 28);
-            doc.setFont('helvetica', 'bold'); doc.setFontSize(9);
-            doc.text('CASHIER', mg + 2, y + 6); doc.setFontSize(8);
-            doc.text('Grand Total:', mg + 2, y + 13);
-            doc.text('Rp ' + grandTotal.toLocaleString('id-ID'), pw - mg - 2, y + 13, { align: 'right' });
+            doc.setFillColor(220, 252, 231); doc.rect(mg, y, colW, 18, 'F');
+            doc.setDrawColor(34, 197, 94); doc.rect(mg, y, colW, 18);
+            doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
+            doc.text('CASHIER', mg + 2, y + 4); doc.setFontSize(7.5);
+            doc.text('Grand Total:', mg + 2, y + 8.5); doc.text('Rp ' + grandTotal.toLocaleString('id-ID'), mg + colW - 2, y + 8.5, { align: 'right' });
             doc.setFont('helvetica', 'normal');
-            doc.text('DP Terbayar:', mg + 2, y + 19);
-            doc.text('Rp ' + dp.toLocaleString('id-ID'), pw - mg - 2, y + 19, { align: 'right' });
-            doc.setDrawColor(34, 197, 94); doc.line(mg + 2, y + 21, pw - mg - 2, y + 21);
+            doc.text('DP Terbayar:', mg + 2, y + 12.5); doc.text('Rp ' + dp.toLocaleString('id-ID'), mg + colW - 2, y + 12.5, { align: 'right' });
             doc.setFont('helvetica', 'bold'); doc.setTextColor(185, 28, 28);
-            doc.text('Sisa Pembayaran:', mg + 2, y + 26);
-            doc.text('Rp ' + sisa.toLocaleString('id-ID'), pw - mg - 2, y + 26, { align: 'right' });
-            doc.setTextColor(0, 0, 0); y += 34;
+            doc.text('Sisa:', mg + 2, y + 16.5); doc.text('Rp ' + sisa.toLocaleString('id-ID'), mg + colW - 2, y + 16.5, { align: 'right' });
+            doc.setTextColor(0, 0, 0); 
 
-            // Signatures
-            if (y > 255) { doc.addPage(); y = 15; }
-            const sw = (pw - 2 * mg) / 3;
-            doc.setFontSize(8); doc.setFont('helvetica', 'normal');
-            ['Dibuat oleh', 'Disetujui', 'Diketahui'].forEach((t, i) => {
-                const sx = mg + i * sw + sw / 2;
-                doc.text(t, sx, y, { align: 'center' });
-                doc.line(sx - 20, y + 18, sx + 20, y + 18);
+            // Signatures aligned with Cashier
+            const sigX = mg + colW + 4;
+            const sigW = colW / 3;
+            doc.setFontSize(7); doc.setFont('helvetica', 'normal');
+            ['Dibuat', 'Disetujui', 'Diketahui'].forEach((t, i) => {
+                const sx = sigX + i * sigW + sigW / 2;
+                doc.text(t, sx, y + 4, { align: 'center' });
+                doc.setDrawColor(150); doc.line(sx - 12, y + 16, sx + 12, y + 16);
             });
 
             // Footer
-            doc.setFillColor(34, 197, 94); doc.rect(0, 287, pw, 10, 'F');
-            doc.setFontSize(7); doc.setTextColor(255, 255, 255);
-            doc.text('Detuik Resto \u00b7 Banquet Event Order \u00b7 Dokumen Internal', pw / 2, 293, { align: 'center' });
+            doc.setFillColor(34, 197, 94); doc.rect(0, 289, pw, 8, 'F');
+            doc.setFontSize(6.5); doc.setTextColor(255, 255, 255);
+            doc.text('Detuik Resto \u00b7 Banquet Event Order \u00b7 Dokumen Internal', pw / 2, 294, { align: 'center' });
 
             const filename = 'BEO_' + (b.pic || 'Event').replace(/\s+/g, '_') + '_' + (b.eventDate || 'date') + '.pdf';
             if (previewOnly) {
@@ -6139,23 +6206,43 @@
                 }
             }
 
+            // [PATCH B] Non-Destructive Deep Merge Save
             let updatedMenus = JSON.parse(JSON.stringify(menuCategories)); // Clone
             if (!updatedMenus[cat]) updatedMenus[cat] = [];
 
-            const menuObj = { name, price };
-            if (Object.keys(subOptionsConfig).length > 0) menuObj.subOptions = subOptionsConfig;
+            // 1. Find existing menu to preserve special properties (like fixedItems, kitchenChoices)
+            let existingMenu = {};
+            if (oldCat && oldName && updatedMenus[oldCat]) {
+                const found = updatedMenus[oldCat].find(m => (typeof m === 'string' ? m : m.name) === oldName);
+                if (found && typeof found === 'object') {
+                    existingMenu = JSON.parse(JSON.stringify(found));
+                }
+            }
 
+            // 2. Create or update menu object preserving old properties
+            const menuObj = { ...existingMenu, name: name, price: price };
+
+            // 3. Apply modifiers securely
+            if (Object.keys(subOptionsConfig).length > 0) {
+                menuObj.subOptions = subOptionsConfig;
+                delete menuObj.options; // Clean up legacy options if migrated
+            } else {
+                delete menuObj.subOptions;
+                delete menuObj.options;
+            }
+
+            // 4. Save back to the array handling string/object formatting
             if (oldCat && oldName) {
                 if (oldCat !== cat) {
                     updatedMenus[cat].push(menuObj);
-                    updatedMenus[oldCat] = updatedMenus[oldCat].filter(m => m.name !== oldName);
+                    updatedMenus[oldCat] = updatedMenus[oldCat].filter(m => (typeof m === 'string' ? m : m.name) !== oldName);
                     if (updatedMenus[oldCat].length === 0) delete updatedMenus[oldCat];
                 } else {
-                    const idx = updatedMenus[cat].findIndex(m => m.name === oldName);
+                    const idx = updatedMenus[cat].findIndex(m => (typeof m === 'string' ? m : m.name) === oldName);
                     if (idx > -1) updatedMenus[cat][idx] = menuObj;
                 }
             } else {
-                if (updatedMenus[cat].some(m => m.name === name)) return alert('Menu sudah ada!');
+                if (updatedMenus[cat].some(m => (typeof m === 'string' ? m : m.name) === name)) return alert('Menu sudah ada!');
                 updatedMenus[cat].push(menuObj);
             }
 
@@ -6174,6 +6261,71 @@
                     // DO NOT manually push to the array or call render functions here.
                     alert('✅ Menu berhasil disinkronkan ke Database!');
                 }).catch(e => alert('Error: ' + e.message));
+        };
+
+        // [PATCH A] Back-Office Menu Renderer
+        window.renderBackOfficeMenus = function () {
+            const tbody = document.getElementById('boMenuTableBody');
+            const filterEl = document.getElementById('boMenuCategoryFilter');
+            if (!tbody) return;
+
+            // 1. Update Filter Dropdown Options
+            const currentFilter = filterEl ? filterEl.value : 'all';
+            if (filterEl) {
+                filterEl.innerHTML = '<option value="all">Semua Kategori</option>';
+                Object.keys(menuCategories).forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    opt.textContent = cat;
+                    filterEl.appendChild(opt);
+                });
+                // Restore selection if category still exists
+                filterEl.value = Object.keys(menuCategories).includes(currentFilter) ? currentFilter : 'all';
+            }
+
+            // 2. Render Table Rows
+            tbody.innerHTML = '';
+            const filterVal = filterEl ? filterEl.value : 'all';
+
+            let hasData = false;
+            Object.entries(menuCategories).forEach(([cat, items]) => {
+                if (filterVal !== 'all' && cat !== filterVal) return;
+
+                items.forEach(menu => {
+                    hasData = true;
+                    // Handle both string format and object format
+                    const menuName = typeof menu === 'string' ? menu : menu.name;
+                    const menuPrice = typeof menu === 'string' ? 0 : (menu.price || 0);
+
+                    const tr = document.createElement('tr');
+                    tr.className = "hover:bg-emerald-50/50 transition-colors";
+                    tr.innerHTML = `
+                        <td class="px-6 py-4 font-bold text-emerald-900">${cat}</td>
+                        <td class="px-6 py-4">${menuName}</td>
+                        <td class="px-6 py-4 font-mono text-stone-600">${typeof formatRP === 'function' ? formatRP(menuPrice) : 'Rp ' + menuPrice}</td>
+                        <td class="px-6 py-4 text-center space-x-2">
+                            <button onclick="editMenu('${cat}', '${menuName}')" class="text-emerald-600 hover:text-emerald-800 text-xs font-bold px-2 py-1 bg-emerald-50 rounded">Edit</button>
+                            <button onclick="deleteMenu('${cat}', '${menuName}')" class="text-red-500 hover:text-red-700 text-xs font-bold px-2 py-1 bg-red-50 rounded">Hapus</button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            });
+
+            if (!hasData) {
+                tbody.innerHTML = '<tr><td colspan="4" class="px-6 py-4 text-center text-stone-400 italic">Tidak ada menu ditemukan.</td></tr>';
+            }
+
+            // 3. Update datalist for "Tambah Menu" modal dynamically
+            const dataList = document.getElementById('boCategoryList');
+            if (dataList) {
+                dataList.innerHTML = '';
+                Object.keys(menuCategories).forEach(cat => {
+                    const opt = document.createElement('option');
+                    opt.value = cat;
+                    dataList.appendChild(opt);
+                });
+            }
         };
 
         window.editMenu = function (cat, name) { openMenuModal(cat, name); };
