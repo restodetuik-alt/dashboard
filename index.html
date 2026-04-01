@@ -1227,7 +1227,12 @@
                                     terpilih.</p>
                             </div>
 
-                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
+                            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap">
+                                <div class="flex items-center gap-2 bg-emerald-50/50 rounded-xl px-3 py-1 border border-emerald-100">
+                                    <input type="date" id="filterDateStart" onchange="applyFilters()" class="bg-transparent text-sm font-bold text-emerald-900 focus:outline-none" title="Tanggal Mulai">
+                                    <span class="text-emerald-900/40 text-sm font-bold">-</span>
+                                    <input type="date" id="filterDateEnd" onchange="applyFilters()" class="bg-transparent text-sm font-bold text-emerald-900 focus:outline-none" title="Tanggal Selesai">
+                                </div>
                                 <select id="filterArea" onchange="applyFilters()"
                                     class="modern-input bg-emerald-50/50 border-transparent focus:bg-white text-emerald-900">
                                     <option value="all">Semua Area</option>
@@ -1266,6 +1271,7 @@
                                     <th class="table-th text-emerald-900/40 px-6 py-4">CAP / TYPE</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">STATUS</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4">MENU</th>
+                                    <th class="table-th text-emerald-900/40 px-6 py-4">CATATAN</th>
                                     <th class="table-th text-emerald-900/40 px-6 py-4 text-center">AKSI</th>
                                 </tr>
                             </thead>
@@ -2757,7 +2763,9 @@
             selectedDate: today,
             filterArea: 'all',
             filterTimeStart: 'all',
-            filterTimeEnd: 'all'
+            filterTimeEnd: 'all',
+            filterDateStart: today,
+            filterDateEnd: today
         };
 
         let guestChart = null;
@@ -4684,7 +4692,19 @@
             tbody.innerHTML = '';
 
             const filtered = reservations.filter(r => {
-                const dateMatch = r.date === state.selectedDate;
+                // Logika Date Range Filter
+                const rDate = r.date;
+                let dateMatch = true;
+                if (state.filterDateStart && state.filterDateEnd) {
+                    dateMatch = rDate >= state.filterDateStart && rDate <= state.filterDateEnd;
+                } else if (state.filterDateStart) {
+                    dateMatch = rDate >= state.filterDateStart;
+                } else if (state.filterDateEnd) {
+                    dateMatch = rDate <= state.filterDateEnd;
+                } else {
+                    dateMatch = rDate === state.selectedDate;
+                }
+
                 const areaMatch = state.filterArea === 'all' || r.area === state.filterArea;
 
                 // Time Intersection Logic
@@ -4749,6 +4769,11 @@
                              ${isOrdered
                             ? `<button onclick="viewMenuDetail('${r.id}')" class="text-emerald-600 bg-emerald-50 text-[10px] font-bold py-2 px-4 rounded-full hover:bg-emerald-100 transition whitespace-nowrap w-full">✅ SUDAH MENU</button>`
                             : `<button onclick="createMenuOrder('${r.id}')" class="text-amber-600 bg-amber-50 text-[10px] font-bold py-2 px-4 rounded-full hover:bg-amber-100 transition whitespace-nowrap w-full">⏳ BELUM MENU</button>`}
+                        </div>
+                    </td>
+                    <td class="px-6 py-6 align-middle">
+                        <div class="text-xs text-emerald-900/70 italic max-w-[200px] break-words">
+                            ${r.notes && r.notes !== '-' ? r.notes : '<span class="opacity-40">Tidak ada catatan</span>'}
                         </div>
                     </td>
                     <td class="px-6 py-6 align-middle text-center">
@@ -4866,6 +4891,12 @@
             const datePicker = document.getElementById('datePicker');
             datePicker.value = state.selectedDate;
 
+            // Initialize date range filters to today
+            const filterDateStartEl = document.getElementById('filterDateStart');
+            const filterDateEndEl = document.getElementById('filterDateEnd');
+            if (filterDateStartEl) filterDateStartEl.value = state.selectedDate;
+            if (filterDateEndEl) filterDateEndEl.value = state.selectedDate;
+
             // Populate Area Select Options in Modal & Filter
             const modalSelect = document.getElementById('inputArea');
             const filterSelect = document.getElementById('filterArea');
@@ -4938,6 +4969,14 @@
             // Event Listeners
             datePicker.addEventListener('change', (e) => {
                 state.selectedDate = e.target.value;
+                // Sinkronkan ke filter range tabel reservasi
+                state.filterDateStart = e.target.value;
+                state.filterDateEnd = e.target.value;
+                const filterStart = document.getElementById('filterDateStart');
+                const filterEnd = document.getElementById('filterDateEnd');
+                if (filterStart) filterStart.value = e.target.value;
+                if (filterEnd) filterEnd.value = e.target.value;
+
                 updateDashboard();
 
                 // Refresh menu dropdown if currently on menu view
@@ -4948,6 +4987,12 @@
             });
 
             window.applyFilters = function () {
+                const startDateEl = document.getElementById('filterDateStart');
+                const endDateEl = document.getElementById('filterDateEnd');
+
+                state.filterDateStart = startDateEl && startDateEl.value ? startDateEl.value : state.selectedDate;
+                state.filterDateEnd = endDateEl && endDateEl.value ? endDateEl.value : state.selectedDate;
+
                 state.filterArea = document.getElementById('filterArea').value;
                 state.filterTimeStart = document.getElementById('filterTimeStart').value;
                 state.filterTimeEnd = document.getElementById('filterTimeEnd').value;
