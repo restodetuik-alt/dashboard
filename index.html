@@ -497,7 +497,8 @@
                                     <option value="" disabled selected>-- Pilih Tanggal & Jam Dahulu --</option>
                                 </select>
                                 <div id="btnViewAreaPhotoWrapper" class="hidden mt-2">
-                                    <button type="button" onclick="openAreaGallery()" class="text-sm text-emerald-600 hover:text-emerald-800 font-bold transition-colors flex items-center gap-1">
+                                    <button type="button" onclick="openAreaGallery()"
+                                        class="text-sm text-emerald-600 hover:text-emerald-800 font-bold transition-colors flex items-center gap-1">
                                         <span>📸</span> Lihat Foto Area
                                     </button>
                                 </div>
@@ -533,7 +534,9 @@
             <div class="p-6 bg-emerald-900 text-white flex justify-between items-center rounded-bl-3xl">
                 <h3 class="font-bold text-lg">Notifikasi</h3>
                 <div class="flex items-center gap-3">
-                    <button onclick="markAllNotificationsRead()" class="text-[10px] text-emerald-300 hover:text-white font-semibold underline transition-colors">Tandai sudah dibaca semua</button>
+                    <button onclick="markAllNotificationsRead()"
+                        class="text-[10px] text-emerald-300 hover:text-white font-semibold underline transition-colors">Tandai
+                        sudah dibaca semua</button>
                     <button onclick="closeNotif()"
                         class="text-emerald-300 hover:text-white transition font-bold text-xl">&times;</button>
                 </div>
@@ -1228,10 +1231,15 @@
                             </div>
 
                             <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 flex-wrap">
-                                <div class="flex items-center gap-2 bg-emerald-50/50 rounded-xl px-3 py-1 border border-emerald-100">
-                                    <input type="date" id="filterDateStart" onchange="applyFilters()" class="bg-transparent text-sm font-bold text-emerald-900 focus:outline-none" title="Tanggal Mulai">
+                                <div
+                                    class="flex items-center gap-2 bg-emerald-50/50 rounded-xl px-3 py-1 border border-emerald-100">
+                                    <input type="date" id="filterDateStart" onchange="applyFilters()"
+                                        class="bg-transparent text-sm font-bold text-emerald-900 focus:outline-none"
+                                        title="Tanggal Mulai">
                                     <span class="text-emerald-900/40 text-sm font-bold">-</span>
-                                    <input type="date" id="filterDateEnd" onchange="applyFilters()" class="bg-transparent text-sm font-bold text-emerald-900 focus:outline-none" title="Tanggal Selesai">
+                                    <input type="date" id="filterDateEnd" onchange="applyFilters()"
+                                        class="bg-transparent text-sm font-bold text-emerald-900 focus:outline-none"
+                                        title="Tanggal Selesai">
                                 </div>
                                 <select id="filterArea" onchange="applyFilters()"
                                     class="modern-input bg-emerald-50/50 border-transparent focus:bg-white text-emerald-900">
@@ -1911,7 +1919,7 @@
             },
             watzap: {
                 apiKey: "BTLXFLVNNF6DQUEL",
-                numberKey: "J4J9KHdFRI8v02S0",
+                numberKey: "rno6FMs5MZow6N7H",
                 baseUrl: "https://api.watzap.id/v1"
             }
         };
@@ -2351,27 +2359,27 @@
         };
 
         // [PATCH A] Notification UX Functions
-        window.markAllNotificationsRead = function() {
+        window.markAllNotificationsRead = function () {
             const tenantId = (typeof tenantDb !== 'undefined' ? tenantDb : CLIENT_CONFIG.tenant.id);
-            
+
             // Mark all Nego reservations as read in Firebase
             const negoRes = reservations.filter(r => r.status === 'Nego' && !r.notifRead);
             if (negoRes.length === 0) return;
-            
+
             const updates = {};
             negoRes.forEach(r => {
                 updates[r.id + '/notifRead'] = true;
             });
-            
+
             database.ref(tenantId + '/reservations').update(updates).then(() => {
                 console.log('✅ Semua notifikasi ditandai sudah dibaca.');
-                
+
                 // [PATCH B] Optimistic UI Clearing
                 const notifListEl = document.getElementById('notifList');
                 if (notifListEl) {
                     notifListEl.innerHTML = '<div class="text-center text-stone-400 text-sm italic py-10">Tidak ada notifikasi baru.</div>';
                 }
-                
+
                 const badge = document.getElementById('notifBadge');
                 if (badge) {
                     badge.classList.add('hidden');
@@ -2380,17 +2388,17 @@
             });
         };
 
-        window.handleNotificationClick = function(resId, notifId) {
+        window.handleNotificationClick = function (resId, notifId) {
             // 1. Mark this specific reservation notification as read in Firebase
             if (resId) {
                 const tenantId = (typeof tenantDb !== 'undefined' ? tenantDb : CLIENT_CONFIG.tenant.id);
                 database.ref(tenantId + '/reservations/' + resId + '/notifRead').set(true);
             }
-            
+
             // 2. Close notification panel & route to Reservation Tab
             closeNotif();
             if (typeof switchView === 'function') switchView('reservation');
-            
+
             // 3. Open the specific reservation edit form
             if (resId && typeof openEditModal === 'function') {
                 setTimeout(() => {
@@ -2797,7 +2805,7 @@
             database.ref(tenantDb + '/settings/areas').on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     areaDefinitions = snapshot.val();
-                    
+
                     // Auto-create Garden Detuik if missing from DB
                     if (!areaDefinitions.some(a => a.id === 'garden_detuik')) {
                         areaDefinitions.push({
@@ -2810,7 +2818,7 @@
                         database.ref(tenantDb + '/settings/areas').set(areaDefinitions); // Sync back to DB
                     }
                 }
-                
+
                 if (typeof renderBackOfficeAreas === 'function') renderBackOfficeAreas();
                 if (typeof loadAreaDropdowns === 'function') loadAreaDropdowns();
                 if (typeof updateDashboard === 'function') updateDashboard();
@@ -2820,21 +2828,21 @@
             database.ref(tenantDb + '/settings/menus').on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const payload = snapshot.val();
-                    
+
                     // Hydrate Local Memory correctly
                     menuCategories = payload;
-                    window.menuCategories = payload; 
+                    window.menuCategories = payload;
                     localStorage.setItem('menuCategories', JSON.stringify(payload));
-                    
+
                     // Trigger UI Re-render
                     if (typeof renderBackOfficeMenus === 'function') renderBackOfficeMenus();
                     if (typeof loadMenuDropdown === 'function') loadMenuDropdown();
                     if (typeof updateDashboard === 'function') updateDashboard();
-                    
+
                     // Auto-refresh Active Order UI
                     const activeResSelect = document.getElementById('menuReservationSelect');
                     if (activeResSelect && activeResSelect.value) {
-                        if (typeof loadMenuForReservation === 'function') loadMenuForReservation(); 
+                        if (typeof loadMenuForReservation === 'function') loadMenuForReservation();
                     }
                 }
             });
@@ -3336,7 +3344,7 @@
                         occupied += (areaDef.type === 'unit') ? 1 : (parseInt(r.pax) || 0);
                         bookedBy.push({ pic: r.pic, pax: r.pax, isBlocked: false, id: r.id });
                     }
-                } 
+                }
                 // Case B: Parent is booked, we are checking a child area
                 else if (areaHierarchy[r.area] && areaHierarchy[r.area].includes(areaId)) {
                     occupied = areaDef.capacity; // Fully blocked by parent
@@ -4401,7 +4409,7 @@
             areaSelect.innerHTML = '<option value="" disabled>-- Pilih Area --</option>';
             const startMin = timeToMinutes(timeStart);
             const endMin = timeToMinutes(timeEnd);
-            
+
             const areaHierarchy = {
                 'garden_detuik': ['lesehan_sangkuriang', 'pelataran_padjajaran', 'lesehan_pasundan', 'lesehan_manglayang']
             };
@@ -4477,7 +4485,7 @@
         }
 
         // [PATCH C] Area Photo Gallery Engine (Production Data)
-        
+
         // 1. Dictionary of Area Photos
         window.AREA_PHOTOS = {
             'bale_sawangan': [
@@ -4539,13 +4547,13 @@
         };
 
         // [PATCH B] Bulletproof Event Listener & Interceptor
-        window.toggleGalleryButton = function() {
+        window.toggleGalleryButton = function () {
             const guestAreaSelect = document.getElementById('guestArea');
             const wrapper = document.getElementById('btnViewAreaPhotoWrapper');
             // Fallback just in case the old button wasn't completely removed
-            const legacyBtn = document.getElementById('btnViewAreaPhoto'); 
+            const legacyBtn = document.getElementById('btnViewAreaPhoto');
             const targetEl = wrapper || legacyBtn;
-            
+
             if (!guestAreaSelect || !targetEl) return;
 
             const areaId = guestAreaSelect.value;
@@ -4566,7 +4574,7 @@
         // 2. Intercept programmatic updates to ensure button syncs dynamically
         if (typeof window.updateGuestSmartAreaDropdown === 'function' && !window.updateGuestSmartAreaDropdown.isIntercepted) {
             const originalUpdateGuestDropdown = window.updateGuestSmartAreaDropdown;
-            window.updateGuestSmartAreaDropdown = function() {
+            window.updateGuestSmartAreaDropdown = function () {
                 originalUpdateGuestDropdown(); // Run original dropdown logic
                 setTimeout(window.toggleGalleryButton, 50); // Sync button visibility after UI updates
             };
@@ -4577,17 +4585,17 @@
         setTimeout(window.toggleGalleryButton, 100);
 
         // 3. Modal Controls
-        window.openAreaGallery = function() {
+        window.openAreaGallery = function () {
             const areaId = document.getElementById('guestArea').value;
             const images = window.AREA_PHOTOS[areaId];
             if (!images || images.length === 0) return;
 
             const container = document.getElementById('galleryImageContainer');
-            
+
             // Clean area name from availability emojis/text
             const rawText = document.getElementById('guestArea').options[document.getElementById('guestArea').selectedIndex].text;
             const cleanName = rawText.replace(/✅|❌/g, '').split('(')[0].trim();
-            
+
             document.getElementById('galleryAreaName').textContent = `Visual Area: ${cleanName}`;
 
             // Build image tags
@@ -4600,7 +4608,7 @@
             document.getElementById('areaGalleryModal').classList.remove('hidden');
         };
 
-        window.closeAreaGallery = function() {
+        window.closeAreaGallery = function () {
             document.getElementById('areaGalleryModal').classList.add('hidden');
             // Clear to save memory
             setTimeout(() => {
@@ -6028,48 +6036,48 @@
         function getBEOWeight(type, name, subKey) {
             const n = (name || '').toLowerCase();
             const k = (subKey || '').toLowerCase();
-            
+
             if (n.includes('--- stall') || k.includes('stall') || n.includes('live')) return 99;
             if (n.includes('[') && n.includes(']')) return 0;
-            
+
             if (type === 'kitchen') {
                 if (n.includes('nasi')) return 1;
                 if (n.includes('sop') || n.includes('sup') || k.includes('soup') || n.includes('bakso')) return 2;
                 if (n.includes('ayam') || n.includes('chicken') || n.includes('beef') || n.includes('sapi') || n.includes('daging')) return 3;
                 if (n.includes('ikan') || n.includes('kakap') || n.includes('gurame') || n.includes('cumi') || n.includes('seafood')) return 4;
-                if (k.includes('lauk')) return 3.5; 
+                if (k.includes('lauk')) return 3.5;
                 if (k.includes('tumis') || n.includes('cah ') || n.includes('capcay') || n.includes('sayur') || n.includes('tofu') || n.includes('brokoli')) return 5;
                 if (n.includes('kerupuk')) return 6;
                 if (n.includes('sambal')) return 7;
-                return 10; 
+                return 10;
             } else {
                 if (n.includes('air mineral')) return 1;
                 if (n.includes('buah') || n.includes('melon') || n.includes('semangka') || k.includes('buah')) return 2;
                 if (n.includes('tea') || n.includes('teh') || n.includes('juice') || n.includes('jus') || n.includes('coffee') || n.includes('kopi')) return 3;
-                if (n.includes('ice cream') || n.includes('puding') || n.includes('dessert')) return 99; 
+                if (n.includes('ice cream') || n.includes('puding') || n.includes('dessert')) return 99;
                 return 10;
             }
         }
-        
+
         function applyBEOSorting(orders) {
             let sorted = orders.sort((a, b) => a.weight - b.weight);
             let result = [];
             let stallAdded = false;
             let seen = new Set();
-            
+
             sorted.forEach(o => {
                 if (o.weight >= 99 && !stallAdded && !o.isSeparator) {
                     result.push({ item: '--- STALL / LIVE ---', quantity: '', isSeparator: true, weight: 98 });
                     stallAdded = true;
                 }
-                
+
                 if (o.isSeparator || o.weight === 0) {
                     result.push(o);
                     return;
                 }
 
                 let cleanName = (o.item || '').replace(/[\u2022]/g, '').trim().toLowerCase();
-                
+
                 if (!seen.has(cleanName)) {
                     seen.add(cleanName);
                     result.push(o);
@@ -6227,7 +6235,7 @@
                                         if (itemData && itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
                                         else if (itemData && itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
                                         else isK = isKitchenItem(sel.choice, subKey);
-                                        
+
                                         const targetArr = isK ? kTemp : pTemp;
                                         targetArr.push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', sel.choice, subKey) });
                                     }
@@ -6250,9 +6258,9 @@
                     }
                 });
 
-                const renderHtml = (arr) => applyBEOSorting(arr).map(x => 
+                const renderHtml = (arr) => applyBEOSorting(arr).map(x =>
                     x.isSeparator ? `<div class="py-2 text-center text-[10px] font-bold text-stone-400 uppercase tracking-widest bg-stone-50 mt-3 rounded">${x.item}</div>` :
-                    `<div class="flex justify-between py-0.5 border-b border-stone-50 text-sm pl-1 ${x.weight === 0 ? 'font-bold italic text-stone-800' : 'text-stone-600'}"><span>${x.item}</span><span class="font-mono text-stone-400 ml-4">x${x.quantity}</span></div>`
+                        `<div class="flex justify-between py-0.5 border-b border-stone-50 text-sm pl-1 ${x.weight === 0 ? 'font-bold italic text-stone-800' : 'text-stone-600'}"><span>${x.item}</span><span class="font-mono text-stone-400 ml-4">x${x.quantity}</span></div>`
                 ).join('');
 
                 kitchenEl.innerHTML = kRaw.length ? renderHtml(kRaw) : '<span class="italic text-stone-400">Tidak ada makanan</span>';
@@ -6363,7 +6371,7 @@
             const jp = window.jspdf || window;
             if (!jp.jsPDF) { alert('jsPDF tidak tersedia.'); return; }
             const doc = new jp.jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-            const pw = 210, mg = 12; 
+            const pw = 210, mg = 12;
             let y = 10;
 
             doc.setFillColor(34, 197, 94); doc.rect(0, 0, pw, 20, 'F');
@@ -6419,7 +6427,7 @@
                                     if (itemData && itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
                                     else if (itemData && itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
                                     else isK = isKitchenItem(sel.choice, subKey);
-                                    
+
                                     const targetArr = isK ? kTemp : pTemp;
                                     targetArr.push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', sel.choice, subKey) });
                                 }
@@ -6453,20 +6461,20 @@
                 doc.setFont('helvetica', 'bold'); doc.setFontSize(8);
                 doc.text(title + (time ? ' \u00b7 ' + time : ''), x + 2, startY + 3.5);
                 let currY = startY + 6;
-                
+
                 if (!orders.length) {
                     doc.setFont('helvetica', 'italic'); doc.setTextColor(150); doc.text('Tidak ada item', x + 2, currY + 3); doc.setTextColor(0); currY += 5;
                 } else {
                     doc.setFont('helvetica', 'normal'); doc.setFontSize(7.5);
                     orders.forEach(o => {
-                        if (currY > 260) { doc.addPage(); currY = 15; } 
-                        
+                        if (currY > 260) { doc.addPage(); currY = 15; }
+
                         if (o.isSeparator) {
                             currY += 1; doc.setFont('helvetica', 'bold'); doc.setTextColor(150);
-                            doc.text(o.item, x + colW/2, currY + 3, {align: 'center'});
+                            doc.text(o.item, x + colW / 2, currY + 3, { align: 'center' });
                             doc.setFont('helvetica', 'normal'); doc.setTextColor(0); currY += 4.5;
                         } else {
-                            if(o.weight === 0) doc.setFont('helvetica', 'bold'); else doc.setFont('helvetica', 'normal');
+                            if (o.weight === 0) doc.setFont('helvetica', 'bold'); else doc.setFont('helvetica', 'normal');
                             doc.text(o.item, x + 2, currY + 3.5);
                             doc.text('' + o.quantity, x + colW - 2, currY + 3.5, { align: 'right' });
                             doc.setDrawColor(240); doc.line(x, currY + 4.5, x + colW, currY + 4.5);
@@ -6491,10 +6499,10 @@
                 if (startY > 260) { doc.addPage(); startY = 15; }
                 doc.setFillColor(243, 244, 246); doc.rect(x, startY, colW, 4.5, 'F');
                 doc.setFont('helvetica', 'bold'); doc.setFontSize(7.5);
-                doc.text(lbl, x + 2, startY + 3); 
+                doc.text(lbl, x + 2, startY + 3);
                 doc.setFont('helvetica', 'normal'); doc.setFontSize(7);
                 const lines = doc.splitTextToSize(val, colW - 4);
-                doc.text(lines, x + 2, startY + 7); 
+                doc.text(lines, x + 2, startY + 7);
                 return startY + 8 + (lines.length * 3.5);
             }
 
@@ -6514,7 +6522,7 @@
             doc.text('DP Terbayar:', mg + 2, y + 12.5); doc.text('Rp ' + dp.toLocaleString('id-ID'), mg + colW - 2, y + 12.5, { align: 'right' });
             doc.setFont('helvetica', 'bold'); doc.setTextColor(185, 28, 28);
             doc.text('Sisa:', mg + 2, y + 16.5); doc.text('Rp ' + sisa.toLocaleString('id-ID'), mg + colW - 2, y + 16.5, { align: 'right' });
-            doc.setTextColor(0, 0, 0); 
+            doc.setTextColor(0, 0, 0);
 
             const sigX = mg + colW + 4;
             const sigW = colW / 3;
@@ -6852,10 +6860,10 @@
             }
 
             const menuObj = { ...existingMenu, name: name, price: price };
-            
+
             if (Object.keys(subOptionsConfig).length > 0) {
                 menuObj.subOptions = subOptionsConfig;
-                delete menuObj.options; 
+                delete menuObj.options;
             } else {
                 delete menuObj.subOptions;
                 delete menuObj.options;
@@ -6894,7 +6902,7 @@
         };
 
         // [PATCH A] Back-Office Menu Renderer
-        window.renderBackOfficeMenus = function() {
+        window.renderBackOfficeMenus = function () {
             const tbody = document.getElementById('boMenuTableBody');
             const filterEl = document.getElementById('boMenuCategoryFilter');
             if (!tbody) return;
@@ -7049,25 +7057,45 @@
     </script>
 
     <!-- [PATCH A] Area Photo Gallery Modal -->
-    <div id="areaGalleryModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity">
+    <div id="areaGalleryModal"
+        class="hidden fixed inset-0 bg-black/80 backdrop-blur-sm z-[100] flex items-center justify-center p-4 transition-opacity">
         <div class="bg-white rounded-2xl max-w-2xl w-full p-5 relative shadow-2xl overflow-hidden">
-            <button onclick="closeAreaGallery()" class="absolute top-3 right-3 text-stone-400 hover:text-red-500 bg-stone-100 hover:bg-red-50 rounded-full w-8 h-8 flex items-center justify-center transition-colors z-10">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+            <button onclick="closeAreaGallery()"
+                class="absolute top-3 right-3 text-stone-400 hover:text-red-500 bg-stone-100 hover:bg-red-50 rounded-full w-8 h-8 flex items-center justify-center transition-colors z-10">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                    stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
             </button>
-            <h3 id="galleryAreaName" class="text-xl font-bold text-emerald-900 mb-4 pr-8 border-b border-emerald-50 pb-2">Foto Area</h3>
-            
-            <div id="galleryImageContainer" class="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 custom-scrollbar">
+            <h3 id="galleryAreaName"
+                class="text-xl font-bold text-emerald-900 mb-4 pr-8 border-b border-emerald-50 pb-2">Foto Area</h3>
+
+            <div id="galleryImageContainer"
+                class="flex overflow-x-auto gap-4 snap-x snap-mandatory pb-4 custom-scrollbar">
             </div>
-            
+
             <p class="text-center text-xs text-stone-400 mt-2 italic">Geser untuk melihat foto lainnya</p>
         </div>
     </div>
 
     <style>
-        .custom-scrollbar::-webkit-scrollbar { height: 8px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: #f5f5f4; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: #d6d3d1; border-radius: 4px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #a8a29e; }
+        .custom-scrollbar::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #f5f5f4;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #d6d3d1;
+            border-radius: 4px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: #a8a29e;
+        }
     </style>
 </body>
 
