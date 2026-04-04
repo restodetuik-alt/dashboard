@@ -4003,7 +4003,7 @@
 
             // Update Firebase - FIXED PATH (No spaces)
             const updates = {};
-            const dbPath = `reservasiRamadhan2026/reservations/${resId}`;
+            const dbPath = `${CLIENT_CONFIG.tenant.id}/reservations/${resId}`;
             updates[`${dbPath}/menuOrders`] = currentMenuOrders;
             updates[`${dbPath}/menuStatus`] = 'Sudah Order';
             updates[`${dbPath}/menuOrderDate`] = new Date().toISOString();
@@ -6200,39 +6200,45 @@
                 r.menuOrders.forEach(o => {
                     const itemData = findMenuItemData(o.item);
                     const isSpecial = itemData && typeof itemData === 'object' && itemData.fixedItems;
+                    const hasSubSelections = o.subSelections && Object.keys(o.subSelections).length > 0;
 
-                    if (isSpecial) {
-                        kRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
-                        pRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                    if (isSpecial || hasSubSelections) {
+                        let kTemp = [];
+                        let pTemp = [];
 
-                        if (itemData.fixedItems.kitchen) itemData.fixedItems.kitchen.forEach(k => kRaw.push({ item: `\u2022 ${k}`, quantity: o.quantity || 1, weight: getBEOWeight('kitchen', k, '') }));
-                        if (itemData.fixedItems.pantry) itemData.fixedItems.pantry.forEach(p => pRaw.push({ item: `\u2022 ${p}`, quantity: o.quantity || 1, weight: getBEOWeight('pantry', p, '') }));
+                        if (isSpecial) {
+                            if (itemData.fixedItems.kitchen) itemData.fixedItems.kitchen.forEach(k => kTemp.push({ item: `\u2022 ${k}`, quantity: o.quantity || 1, weight: getBEOWeight('kitchen', k, '') }));
+                            if (itemData.fixedItems.pantry) itemData.fixedItems.pantry.forEach(p => pTemp.push({ item: `\u2022 ${p}`, quantity: o.quantity || 1, weight: getBEOWeight('pantry', p, '') }));
+                        }
 
-                        if (o.subSelections) {
+                        if (hasSubSelections) {
                             Object.entries(o.subSelections).forEach(([subKey, sels]) => {
                                 sels.forEach(sel => {
                                     if (sel.qty > 0 && sel.choice && !sel.choice.includes("Kosong")) {
                                         let isK = true;
-                                        if (itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
-                                        else if (itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
+                                        if (itemData && itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
+                                        else if (itemData && itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
                                         else isK = isKitchenItem(sel.choice, subKey);
                                         
-                                        const targetArr = isK ? kRaw : pRaw;
+                                        const targetArr = isK ? kTemp : pTemp;
                                         targetArr.push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', sel.choice, subKey) });
                                     }
                                 });
                             });
                         }
+
+                        if (kTemp.length > 0) {
+                            kRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                            kRaw.push(...kTemp);
+                        }
+                        if (pTemp.length > 0) {
+                            pRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                            pRaw.push(...pTemp);
+                        }
                     } else {
                         const isK = isKitchenItem(o.item, itemData ? itemData.category : '');
                         const targetArr = isK ? kRaw : pRaw;
-                        let itemName = o.item;
-                        if (o.subSelections) {
-                            let subParts = [];
-                            Object.entries(o.subSelections).forEach(([_, sels]) => sels.filter(s => s.qty > 0 && s.choice).forEach(s => subParts.push(`${s.qty} ${s.choice}`)));
-                            if (subParts.length) itemName += ` <span class="text-xs text-stone-400">(${subParts.join(', ')})</span>`;
-                        }
-                        targetArr.push({ item: itemName, quantity: o.quantity || 1, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', o.item, '') });
+                        targetArr.push({ item: o.item, quantity: o.quantity || 1, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', o.item, '') });
                     }
                 });
 
@@ -6386,36 +6392,45 @@
             (b.menuOrders || []).forEach(o => {
                 const itemData = findMenuItemData(o.item);
                 const isSpecial = itemData && typeof itemData === 'object' && itemData.fixedItems;
+                const hasSubSelections = o.subSelections && Object.keys(o.subSelections).length > 0;
 
-                if (isSpecial) {
-                    kRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
-                    pRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
-                    
-                    if (itemData.fixedItems.kitchen) itemData.fixedItems.kitchen.forEach(k => kRaw.push({ item: `\u2022 ${k}`, quantity: o.quantity || 1, weight: getBEOWeight('kitchen', k, '') }));
-                    if (itemData.fixedItems.pantry) itemData.fixedItems.pantry.forEach(p => pRaw.push({ item: `\u2022 ${p}`, quantity: o.quantity || 1, weight: getBEOWeight('pantry', p, '') }));
-                    
-                    if (o.subSelections) {
+                if (isSpecial || hasSubSelections) {
+                    let kTemp = [];
+                    let pTemp = [];
+
+                    if (isSpecial) {
+                        if (itemData.fixedItems.kitchen) itemData.fixedItems.kitchen.forEach(k => kTemp.push({ item: `\u2022 ${k}`, quantity: o.quantity || 1, weight: getBEOWeight('kitchen', k, '') }));
+                        if (itemData.fixedItems.pantry) itemData.fixedItems.pantry.forEach(p => pTemp.push({ item: `\u2022 ${p}`, quantity: o.quantity || 1, weight: getBEOWeight('pantry', p, '') }));
+                    }
+
+                    if (hasSubSelections) {
                         Object.entries(o.subSelections).forEach(([subKey, sels]) => {
                             sels.forEach(sel => {
                                 if (sel.qty > 0 && sel.choice && !sel.choice.includes("Kosong")) {
                                     let isK = true;
-                                    if (itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
-                                    else if (itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
+                                    if (itemData && itemData.kitchenChoices && itemData.kitchenChoices.includes(subKey)) isK = true;
+                                    else if (itemData && itemData.pantryChoices && itemData.pantryChoices.includes(subKey)) isK = false;
                                     else isK = isKitchenItem(sel.choice, subKey);
-                                    (isK ? kRaw : pRaw).push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', sel.choice, subKey) });
+                                    
+                                    const targetArr = isK ? kTemp : pTemp;
+                                    targetArr.push({ item: `\u2022 ${sel.choice}`, quantity: sel.qty, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', sel.choice, subKey) });
                                 }
                             });
                         });
                     }
+
+                    if (kTemp.length > 0) {
+                        kRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                        kRaw.push(...kTemp);
+                    }
+                    if (pTemp.length > 0) {
+                        pRaw.push({ item: `[ ${o.item} ]`, quantity: o.quantity || 1, weight: 0 });
+                        pRaw.push(...pTemp);
+                    }
                 } else {
                     const isK = isKitchenItem(o.item, itemData ? itemData.category : '');
-                    let itemName = o.item;
-                    if (o.subSelections) {
-                        let subParts = [];
-                        Object.entries(o.subSelections).forEach(([_, sels]) => sels.filter(s => s.qty > 0 && s.choice).forEach(s => subParts.push(`${s.qty} ${s.choice}`)));
-                        if (subParts.length) itemName += ` (${subParts.join(', ')})`;
-                    }
-                    (isK ? kRaw : pRaw).push({ item: itemName, quantity: o.quantity || 1, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', o.item, '') });
+                    const targetArr = isK ? kRaw : pRaw;
+                    targetArr.push({ item: o.item, quantity: o.quantity || 1, weight: getBEOWeight(isK ? 'kitchen' : 'pantry', o.item, '') });
                 }
             });
 
