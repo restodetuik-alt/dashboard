@@ -32,6 +32,32 @@
         window.financialData = [];
         window.marketingData = [];
         window.leadsData = [];
+        
+        // Phase 2 Analytics Data Stores
+        window.conversionData = [];
+        window.visitData = [];
+        window.ageData = [];
+
+        window.handleConversionSubmit = (e) => {
+            e.preventDefault();
+            const data = { date: document.getElementById('convDate').value, leads: parseInt(document.getElementById('convLeads').value) || 0, convert: parseInt(document.getElementById('convSales').value) || 0 };
+            if (typeof database !== 'undefined') database.ref(CLIENT_CONFIG.tenant.id + '/metrics/conversion').push(data).then(() => alert("✅ Data Conversion tersimpan!"));
+            e.target.reset();
+        };
+
+        window.handleVisitSubmit = (e) => {
+            e.preventDefault();
+            const data = { date: document.getElementById('visitDate').value, first: parseInt(document.getElementById('visitFirst').value) || 0, repeat: parseInt(document.getElementById('visitRepeat').value) || 0, loyal: parseInt(document.getElementById('visitLoyal').value) || 0 };
+            if (typeof database !== 'undefined') database.ref(CLIENT_CONFIG.tenant.id + '/metrics/visit').push(data).then(() => alert("✅ Data Tipe Kunjungan tersimpan!"));
+            e.target.reset();
+        };
+
+        window.handleAgeSubmit = (e) => {
+            e.preventDefault();
+            const data = { date: document.getElementById('ageDate').value, genz: parseInt(document.getElementById('ageGenZ').value) || 0, milenial: parseInt(document.getElementById('ageMilenial').value) || 0, boomer: parseInt(document.getElementById('ageBoomer').value) || 0 };
+            if (typeof database !== 'undefined') database.ref(CLIENT_CONFIG.tenant.id + '/metrics/age').push(data).then(() => alert("✅ Data Demografi Usia tersimpan!"));
+            e.target.reset();
+        };
 
         window.handleFinancialSubmit = (e) => {
             e.preventDefault();
@@ -41,21 +67,21 @@
                 pax: parseInt(document.getElementById('finPax').value) || 0,
                 receipts: parseInt(document.getElementById('finReceipts').value) || 0
             };
-            if (window.database) window.database.ref(CLIENT_CONFIG.tenant.id + '/metrics/financial').push(data).then(() => alert("✅ Data Financial tersimpan di Cloud!"));
+            if (typeof database !== 'undefined') database.ref(CLIENT_CONFIG.tenant.id + '/metrics/financial').push(data).then(() => alert("✅ Data Financial tersimpan di Cloud!"));
             e.target.reset();
         };
 
         window.handleMarketingSubmit = (e) => {
             e.preventDefault();
             const data = { date: document.getElementById('mktDate').value, spend: parseInt(document.getElementById('mktSpend').value) };
-            if (window.database) window.database.ref(CLIENT_CONFIG.tenant.id + '/metrics/marketing').push(data).then(() => alert("✅ Data Marketing tersimpan di Cloud!"));
+            if (typeof database !== 'undefined') database.ref(CLIENT_CONFIG.tenant.id + '/metrics/marketing').push(data).then(() => alert("✅ Data Marketing tersimpan di Cloud!"));
             e.target.reset();
         };
 
         window.handleLeadsSubmit = (e) => {
             e.preventDefault();
             const data = { date: document.getElementById('leadDate').value, vol: parseInt(document.getElementById('leadVol').value), deals: parseInt(document.getElementById('leadDeals').value) };
-            if (window.database) window.database.ref(CLIENT_CONFIG.tenant.id + '/metrics/leads').push(data).then(() => alert("✅ Data Leads tersimpan di Cloud!"));
+            if (typeof database !== 'undefined') database.ref(CLIENT_CONFIG.tenant.id + '/metrics/leads').push(data).then(() => alert("✅ Data Leads tersimpan di Cloud!"));
             e.target.reset();
         };
 
@@ -74,7 +100,7 @@
             if (document.getElementById('ph1-cpl')) document.getElementById('ph1-cpl').innerText = "Rp " + cpl.toLocaleString('id-ID');
         };
 
-        // Modify toggleBackOfficeTab to support operasional
+        // Modify toggleBackOfficeTab to support operasional & analytics
         const originalToggle = window.toggleBackOfficeTab;
         window.toggleBackOfficeTab = function (tab) {
             document.querySelectorAll('[id^=bo-section-]').forEach(el => el.classList.add('hidden'));
@@ -85,8 +111,10 @@
 
             document.getElementById('bo-section-' + tab).classList.remove('hidden');
             const activeBtn = document.getElementById('bo-tab-' + tab);
-            activeBtn.classList.add('font-bold', 'border-b-2', 'border-emerald-600');
-            activeBtn.classList.remove('font-medium', 'text-emerald-900/50', 'hover:text-emerald-900');
+            if(activeBtn) {
+                activeBtn.classList.add('font-bold', 'border-b-2', 'border-emerald-600');
+                activeBtn.classList.remove('font-medium', 'text-emerald-900/50', 'hover:text-emerald-900');
+            }
         };
 
     </script>
@@ -931,6 +959,49 @@
                         </div>
                     </div>
 
+                    <div class="modern-card">
+                        <h3 id="homeChartConvLabel" class="font-bold text-stone-900 mb-4">Tren Konversi (Leads vs Sales)</h3>
+                        <div style="height: 200px;">
+                            <canvas id="trenConvChart" class="w-full" style="max-height: 200px;"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="modern-card">
+                        <h3 class="font-bold text-stone-900 mb-4">Tipe Kunjungan</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1"><span class="text-emerald-700">Acquisition</span><span id="pctVisitFirst">0%</span></div>
+                                <div class="w-full bg-stone-100 rounded-full h-2"><div id="barVisitFirst" class="bg-emerald-500 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1"><span class="text-amber-600">Repeat Customer</span><span id="pctVisitRepeat">0%</span></div>
+                                <div class="w-full bg-stone-100 rounded-full h-2"><div id="barVisitRepeat" class="bg-amber-400 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1"><span class="text-indigo-600">Loyal Customer</span><span id="pctVisitLoyal">0%</span></div>
+                                <div class="w-full bg-stone-100 rounded-full h-2"><div id="barVisitLoyal" class="bg-indigo-500 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modern-card">
+                        <h3 class="font-bold text-stone-900 mb-4">Demografi Usia</h3>
+                        <div class="space-y-4">
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1"><span class="text-blue-600">Gen Z (18-30)</span><span id="pctAgeGenZ">0%</span></div>
+                                <div class="w-full bg-stone-100 rounded-full h-2"><div id="barAgeGenZ" class="bg-blue-400 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1"><span class="text-emerald-600">Milenial (30-45)</span><span id="pctAgeMilenial">0%</span></div>
+                                <div class="w-full bg-stone-100 rounded-full h-2"><div id="barAgeMilenial" class="bg-emerald-500 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                            <div>
+                                <div class="flex justify-between text-xs font-bold mb-1"><span class="text-purple-600">Boomer (>45)</span><span id="pctAgeBoomer">0%</span></div>
+                                <div class="w-full bg-stone-100 rounded-full h-2"><div id="barAgeBoomer" class="bg-purple-500 h-2 rounded-full" style="width: 0%"></div></div>
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Tren Total Omzet Chart -->
                     <div class="modern-card">
                         <h3 id="homeChartOmzetLabel" class="font-bold text-stone-900 mb-4">Total Omzet Harian</h3>
@@ -1319,8 +1390,46 @@
                             class="font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2">Area (Table &
                             Lesehan)</button>
                         <button onclick="toggleBackOfficeTab('menu')" id="bo-tab-menu"
-                            class="font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2">Daftar
-                            Menu</button>
+                            class="font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2">Daftar Menu</button>
+                        <button onclick="toggleBackOfficeTab('analitik')" id="bo-tab-analitik"
+                            class="font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2">Analitik Pelanggan</button>
+                    </div>
+
+                    <div id="bo-section-analitik" class="hidden space-y-6">
+                        <div class="flex justify-between items-center mb-6">
+                            <h4 class="text-xl font-bold text-emerald-900">Input Data Analitik</h4>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-emerald-900/5">
+                                <h3 class="font-bold text-emerald-900 mb-4 flex items-center gap-2">Conversion Rate</h3>
+                                <form onsubmit="handleConversionSubmit(event)" class="space-y-4">
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Tanggal</label><input type="date" id="convDate" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Leads Masuk</label><input type="number" id="convLeads" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Leads Convert to Sales</label><input type="number" id="convSales" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2 rounded-xl hover:bg-emerald-700 transition">Simpan Konversi</button>
+                                </form>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-emerald-900/5">
+                                <h3 class="font-bold text-emerald-900 mb-4 flex items-center gap-2">Tipe Kunjungan</h3>
+                                <form onsubmit="handleVisitSubmit(event)" class="space-y-4">
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Tanggal</label><input type="date" id="visitDate" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Kunjungan Pertama (Acquisition)</label><input type="number" id="visitFirst" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Kunjungan Kedua (Repeat)</label><input type="number" id="visitRepeat" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Kunjungan Ketiga+ (Loyal)</label><input type="number" id="visitLoyal" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2 rounded-xl hover:bg-emerald-700 transition">Simpan Tipe Kunjungan</button>
+                                </form>
+                            </div>
+                            <div class="bg-white p-6 rounded-2xl shadow-sm ring-1 ring-emerald-900/5">
+                                <h3 class="font-bold text-emerald-900 mb-4 flex items-center gap-2">Demografi Usia</h3>
+                                <form onsubmit="handleAgeSubmit(event)" class="space-y-4">
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Tanggal</label><input type="date" id="ageDate" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Usia 18-30 (Gen Z)</label><input type="number" id="ageGenZ" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Usia 30-45 (Milenial)</label><input type="number" id="ageMilenial" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <div><label class="block text-xs font-bold text-emerald-900/40 mb-1">Usia >45 (Boomer)</label><input type="number" id="ageBoomer" required class="modern-input w-full px-3 py-2 text-sm"></div>
+                                    <button type="submit" class="w-full bg-emerald-600 text-white font-bold py-2 rounded-xl hover:bg-emerald-700 transition">Simpan Usia</button>
+                                </form>
+                            </div>
+                        </div>
                     </div>
 
 
@@ -1424,6 +1533,7 @@
                             <h4 class="text-xl font-bold text-emerald-900">Kelola Menu</h4>
                             <div class="flex gap-4 w-full sm:w-auto">
                                 <select id="boMenuCategoryFilter" onchange="renderBackOfficeMenus()"
+                                    title="Filter Kategori Menu" aria-label="Filter Kategori Menu"
                                     class="modern-input">
                                     <option value="all">Semua Kategori</option>
                                 </select>
@@ -2849,15 +2959,27 @@
 
             // 4. Listener Marketing & Finance (Live)
             database.ref(tenantDb + '/metrics/financial').on('value', (snap) => {
-                financialData = snap.val() ? Object.values(snap.val()) : [];
+                window.financialData = snap.val() ? Object.values(snap.val()) : [];
                 if (typeof updatePhase1Metrics === 'function') updatePhase1Metrics();
             });
+            database.ref(tenantDb + '/metrics/conversion').on('value', (snap) => {
+                window.conversionData = snap.val() ? Object.values(snap.val()) : [];
+                if (typeof updateDashboard === 'function') updateDashboard();
+            });
+            database.ref(tenantDb + '/metrics/visit').on('value', (snap) => {
+                window.visitData = snap.val() ? Object.values(snap.val()) : [];
+                if (typeof updateDashboard === 'function') updateDashboard();
+            });
+            database.ref(tenantDb + '/metrics/age').on('value', (snap) => {
+                window.ageData = snap.val() ? Object.values(snap.val()) : [];
+                if (typeof updateDashboard === 'function') updateDashboard();
+            });
             database.ref(tenantDb + '/metrics/marketing').on('value', (snap) => {
-                marketingData = snap.val() ? Object.values(snap.val()) : [];
+                window.marketingData = snap.val() ? Object.values(snap.val()) : [];
                 if (typeof updatePhase1Metrics === 'function') updatePhase1Metrics();
             });
             database.ref(tenantDb + '/metrics/leads').on('value', (snap) => {
-                leadsData = snap.val() ? Object.values(snap.val()) : [];
+                window.leadsData = snap.val() ? Object.values(snap.val()) : [];
                 if (typeof updatePhase1Metrics === 'function') updatePhase1Metrics();
             });
 
@@ -2964,20 +3086,15 @@
                 return s;
             }, 0);
 
-            // TICKET 3: Conversion Rate KPI
-            // Retrieve total daily chat inquiries from localStorage
-            let dailyChatData = JSON.parse(localStorage.getItem('dailyChatInquiries') || '[]');
-            const filteredChats = dailyChatData.filter(c => {
+            // TICKET 3: Conversion Rate KPI (Updated)
+            const filteredConv = conversionData.filter(c => {
                 if (startDate && c.date < startDate) return false;
                 if (endDate && c.date > endDate) return false;
                 return true;
             });
-            const totalInquiries = filteredChats.reduce((s, c) =>
-                s + (parseInt(c.ig) || 0) + (parseInt(c.tiktok) || 0) + (parseInt(c.ads) || 0) + (parseInt(c.relasi) || 0)
-                , 0);
-
-            const totalDeals = filtered.filter(r => r.status === 'Deal').length;
-            const convRate = totalInquiries > 0 ? ((totalDeals / totalInquiries) * 100).toFixed(1) : 0;
+            const totLeadsMasuk = filteredConv.reduce((s, c) => s + (c.leads || 0), 0);
+            const totLeadsConvert = filteredConv.reduce((s, c) => s + (c.convert || 0), 0);
+            const convRate = totLeadsMasuk > 0 ? ((totLeadsConvert / totLeadsMasuk) * 100).toFixed(1) : 0;
 
             // Update homepage KPI cards
             const el = (id) => document.getElementById(id);
@@ -3003,13 +3120,8 @@
         }
 
         // Update Dashboard (Date-specific views like availability grid, charts, tables)
-        function updateDashboard() {
-            renderAvailabilityGrid();
-            renderStatusChart();
-            renderReservationTable();
-            renderDailyTrendCharts();
-            loadMenuDropdown();
-        }
+        // Fungsi updateDashboard yang lama telah dihapus untuk mencegah ReferenceError pada renderStatusChart.
+        // Sistem sekarang menggunakan window.updateDashboard yang lebih aman.
 
 
         // --- 2. Core Logic Functions ---
@@ -3020,66 +3132,91 @@
         let dailyTrendOmzetChart = null;
         let chatSourcePieChart = null;
 
-        function renderDailyTrendCharts() {
+        window.renderDailyTrendCharts = function() {
             const countCanvas = document.getElementById('trenReservasiCountChart');
             const paxCanvas = document.getElementById('trenReservasiPaxChart');
             const omzetCanvas = document.getElementById('trenOmzetChart');
             const chatSourceCanvas = document.getElementById('chatSourceChart');
 
-            // Read range from filter inputs (fallback to current month)
-            const r = getCurrentMonthRange();
+            // Read range from filter inputs
+            const r = (typeof getCurrentMonthRange === 'function') ? getCurrentMonthRange() : { start: '', end: '' };
             const startEl = document.getElementById('homeFilterStart');
             const endEl = document.getElementById('homeFilterEnd');
-            const startDate = (startEl && startEl.value) ? startEl.value : r.start;
-            const endDate = (endEl && endEl.value) ? endEl.value : r.end;
+            const startDateStr = (startEl && startEl.value) ? startEl.value : r.start;
+            const endDateStr = (endEl && endEl.value) ? endEl.value : r.end;
 
-            // Update chart headings
-            const fmtLabel = (d) => new Date(d + 'T00:00').toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+            // Validate Dates
+            let startDate = new Date(startDateStr + 'T00:00:00');
+            let endDate = new Date(endDateStr + 'T23:59:59');
+            
+            if (isNaN(startDate.getTime())) startDate = new Date(r.start + 'T00:00:00');
+            if (isNaN(endDate.getTime())) endDate = new Date(r.end + 'T23:59:59');
+
+            // Update chart headings safely
+            const fmtLabel = (d) => {
+                const dt = new Date(d);
+                return isNaN(dt.getTime()) ? '' : dt.toLocaleDateString('id-ID', { day: '2-digit', month: 'short' });
+            };
             const rangeLabel = `${fmtLabel(startDate)} – ${fmtLabel(endDate)}`;
 
             const cl = document.getElementById('homeChartCountLabel');
             const pl = document.getElementById('homeChartPaxLabel');
             const ol = document.getElementById('homeChartOmzetLabel');
             const csl = document.getElementById('homeChartChatSourceLabel');
+            const cvl = document.getElementById('homeChartConvLabel');
 
             if (cl) cl.textContent = `Jumlah Reservasi (${rangeLabel})`;
             if (pl) pl.textContent = `Total Pax (${rangeLabel})`;
             if (ol) ol.textContent = `Total Omzet Harian (${rangeLabel})`;
             if (csl) csl.textContent = `Sumber Interaksi Chat (${rangeLabel})`;
+            if (cvl) cvl.textContent = `Tren Konversi (${rangeLabel})`;
 
-            // Generate all dates in range
+            // Generate all dates safely (Timezone-Bug Free format)
             const dates = [];
-            let currentDate = new Date(startDate + 'T00:00');
-            const end = new Date(endDate + 'T00:00');
-            while (currentDate <= end) {
-                dates.push(currentDate.toISOString().split('T')[0]);
-                currentDate.setDate(currentDate.getDate() + 1);
+            if (!isNaN(startDate.getTime()) && !isNaN(endDate.getTime())) {
+                let currentDate = new Date(startDate.getTime());
+                let loopCount = 0; // Prevent infinite loops
+                while (currentDate <= endDate && loopCount < 366) {
+                    const y = currentDate.getFullYear();
+                    const m = String(currentDate.getMonth() + 1).padStart(2, '0');
+                    const d = String(currentDate.getDate()).padStart(2, '0');
+                    dates.push(`${y}-${m}-${d}`);
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    loopCount++;
+                }
             }
 
             // Group reservations by date
             const dailyData = {};
             dates.forEach(d => dailyData[d] = { count: 0, pax: 0, omzet: 0 });
 
-            reservations.forEach(r => {
-                if (r.date >= startDate && r.date <= endDate && r.status !== 'Canceled') {
+            // Ensure window.reservations or fallback exists
+            let safeReservations = [];
+            if (Array.isArray(window.reservations)) safeReservations = window.reservations;
+            else if (typeof reservations !== 'undefined' && Array.isArray(reservations)) safeReservations = reservations;
+
+            safeReservations.forEach(r => {
+                if (r && r.date >= startDateStr && r.date <= endDateStr && r.status !== 'Canceled') {
                     if (dailyData[r.date]) {
                         dailyData[r.date].count++;
                         dailyData[r.date].pax += parseInt(r.pax) || 0;
-                        if (r.status === 'Deal') {
-                            dailyData[r.date].omzet += calcReservationMenuTotal(r);
+                        if (r.status === 'Deal' && typeof calcReservationMenuTotal === 'function') {
+                            dailyData[r.date].omzet += calcReservationMenuTotal(r) || 0;
                         }
                     }
                 }
             });
 
-            // Destroy previous chart instances
-            if (dailyTrendCountChart) dailyTrendCountChart.destroy();
-            if (dailyTrendPaxChart) dailyTrendPaxChart.destroy();
-            if (dailyTrendOmzetChart) dailyTrendOmzetChart.destroy();
-            if (chatSourcePieChart) chatSourcePieChart.destroy();
+            // Safely Destroy previous chart instances
+            if (window.dailyTrendCountChart && typeof window.dailyTrendCountChart.destroy === 'function') window.dailyTrendCountChart.destroy();
+            if (window.dailyTrendPaxChart && typeof window.dailyTrendPaxChart.destroy === 'function') window.dailyTrendPaxChart.destroy();
+            if (window.dailyTrendOmzetChart && typeof window.dailyTrendOmzetChart.destroy === 'function') window.dailyTrendOmzetChart.destroy();
+            if (window.chatSourcePieChart && typeof window.chatSourcePieChart.destroy === 'function') window.chatSourcePieChart.destroy();
+            if (window.trenConvChart && typeof window.trenConvChart.destroy === 'function') window.trenConvChart.destroy();
 
             const chartXLabels = dates.map(d => {
-                const dt = new Date(d + 'T00:00');
+                const dt = new Date(d + 'T00:00:00');
+                if (isNaN(dt.getTime())) return d;
                 return `${dt.getDate()}/${dt.getMonth() + 1}`;
             });
 
@@ -3087,15 +3224,8 @@
                 responsive: true,
                 maintainAspectRatio: false,
                 scales: {
-                    y: {
-                        beginAtZero: true,
-                        ticks: { stepSize: 1, color: '#78716c', font: { size: 11 } },
-                        grid: { color: 'rgba(0,0,0,0.05)' }
-                    },
-                    x: {
-                        ticks: { color: '#78716c', font: { size: 10 }, maxRotation: 45, minRotation: 0 },
-                        grid: { display: false }
-                    }
+                    y: { beginAtZero: true, ticks: { stepSize: 1, color: '#78716c', font: { size: 11 } }, grid: { color: 'rgba(0,0,0,0.05)' } },
+                    x: { ticks: { color: '#78716c', font: { size: 10 }, maxRotation: 45, minRotation: 0 }, grid: { display: false } }
                 },
                 plugins: {
                     legend: { display: false },
@@ -3105,96 +3235,126 @@
 
             // Chart 1: Jumlah Reservasi
             if (countCanvas) {
-                const countCtx = countCanvas.getContext('2d');
-                dailyTrendCountChart = new Chart(countCtx, {
+                window.dailyTrendCountChart = new Chart(countCanvas.getContext('2d'), {
                     type: 'bar',
-                    data: {
-                        labels: chartXLabels,
-                        datasets: [{ label: 'Jumlah Reservasi', data: dates.map(d => dailyData[d].count), backgroundColor: '#112915', borderColor: '#112915', borderWidth: 2, borderRadius: 6 }]
-                    },
+                    data: { labels: chartXLabels, datasets: [{ label: 'Jumlah Reservasi', data: dates.map(d => dailyData[d].count), backgroundColor: '#112915', borderRadius: 6 }] },
                     options: commonOptions
                 });
             }
 
             // Chart 2: Total Pax
             if (paxCanvas) {
-                const paxCtx = paxCanvas.getContext('2d');
-                dailyTrendPaxChart = new Chart(paxCtx, {
+                window.dailyTrendPaxChart = new Chart(paxCanvas.getContext('2d'), {
                     type: 'bar',
-                    data: {
-                        labels: chartXLabels,
-                        datasets: [{ label: 'Total Pax', data: dates.map(d => dailyData[d].pax), backgroundColor: '#C5F04A', borderColor: '#C5F04A', borderWidth: 2, borderRadius: 6 }]
-                    },
+                    data: { labels: chartXLabels, datasets: [{ label: 'Total Pax', data: dates.map(d => dailyData[d].pax), backgroundColor: '#C5F04A', borderRadius: 6 }] },
                     options: commonOptions
                 });
             }
 
             // Chart 3: Total Omzet
             if (omzetCanvas) {
-                const omzetCtx = omzetCanvas.getContext('2d');
-                dailyTrendOmzetChart = new Chart(omzetCtx, {
+                window.dailyTrendOmzetChart = new Chart(omzetCanvas.getContext('2d'), {
+                    type: 'line',
+                    data: { labels: chartXLabels, datasets: [{ label: 'Total Omzet (Deal)', data: dates.map(d => dailyData[d].omzet), backgroundColor: 'rgba(197,240,74,0.1)', borderColor: '#C5F04A', borderWidth: 2, tension: 0.3, fill: true }] },
+                    options: commonOptions
+                });
+            }
+
+            // Chart 4: Chat Source
+            let trendChatData = [];
+            try {
+                const storedChatSource = localStorage.getItem('dailyChatInquiries');
+                if (storedChatSource) {
+                    const parsed = JSON.parse(storedChatSource);
+                    if (Array.isArray(parsed)) trendChatData = parsed;
+                }
+            } catch (e) {
+                console.warn('Failed to parse dailyChatInquiries from localStorage, defaulting to empty array.');
+            }
+
+            let sumIg = 0, sumTiktok = 0, sumAds = 0, sumRelasi = 0;
+            trendChatData.forEach(c => {
+                if (c && c.date >= startDateStr && c.date <= endDateStr) {
+                    sumIg += parseInt(c.ig) || 0; sumTiktok += parseInt(c.tiktok) || 0; sumAds += parseInt(c.ads) || 0; sumRelasi += parseInt(c.relasi) || 0;
+                }
+            });
+
+            if (chatSourceCanvas) {
+                window.chatSourcePieChart = new Chart(chatSourceCanvas.getContext('2d'), {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Instagram', 'TikTok', 'Ads', 'Relasi'],
+                        datasets: [{ data: [sumIg, sumTiktok, sumAds, sumRelasi], backgroundColor: ['#C5F04A', '#112915', '#1e3b24', '#2d5a37'], borderWidth: 2, borderColor: '#ffffff' }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'right' } } }
+                });
+            }
+
+            // Chart 5: Conversion Comparison (Secured Variable Reference)
+            const convCanvas = document.getElementById('trenConvChart');
+            if (convCanvas) {
+                const dailyConv = {};
+                dates.forEach(d => dailyConv[d] = { leads: 0, convert: 0 });
+
+                if (Array.isArray(window.conversionData)) {
+                    window.conversionData.forEach(c => {
+                        if (c && c.date >= startDateStr && c.date <= endDateStr && dailyConv[c.date]) {
+                            dailyConv[c.date].leads += parseInt(c.leads) || 0;
+                            dailyConv[c.date].convert += parseInt(c.convert) || 0;
+                        }
+                    });
+                }
+
+                window.trenConvChart = new Chart(convCanvas.getContext('2d'), {
                     type: 'line',
                     data: {
                         labels: chartXLabels,
-                        datasets: [{
-                            label: 'Total Omzet (Deal)',
-                            data: dates.map(d => dailyData[d].omzet),
-                            backgroundColor: 'rgba(197,240,74,0.1)',
-                            borderColor: '#C5F04A',
-                            borderWidth: 2,
-                            tension: 0.3,
-                            fill: true
-                        }]
+                        datasets: [
+                            { label: 'Leads Masuk', data: dates.map(d => dailyConv[d].leads), borderColor: '#9ca3af', borderDash: [5, 5], tension: 0.3 },
+                            { label: 'Convert to Sales', data: dates.map(d => dailyConv[d].convert), borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', fill: true, tension: 0.3 }
+                        ]
                     },
                     options: commonOptions
                 });
             }
 
-            // Chart 4: Chat Source Doughnut
-            let trendChatData = JSON.parse(localStorage.getItem('dailyChatInquiries') || '[]');
-            const trendFilteredChats = trendChatData.filter(c => {
-                if (startDate && c.date < startDate) return false;
-                if (endDate && c.date > endDate) return false;
-                return true;
-            });
+            // Progress Bars (Secured Array Filter mapping)
+            const filterArr = (arr) => Array.isArray(arr) ? arr.filter(d => d && d.date >= startDateStr && d.date <= endDateStr) : [];
+            
+            const fVisit = filterArr(window.visitData);
+            const sF = fVisit.reduce((s, d) => s + (parseInt(d.first) || 0), 0);
+            const sR = fVisit.reduce((s, d) => s + (parseInt(d.repeat) || 0), 0);
+            const sL = fVisit.reduce((s, d) => s + (parseInt(d.loyal) || 0), 0);
+            const tV = sF + sR + sL;
 
-            let sumIg = 0, sumTiktok = 0, sumAds = 0, sumRelasi = 0;
-            trendFilteredChats.forEach(c => {
-                sumIg += parseInt(c.ig) || 0;
-                sumTiktok += parseInt(c.tiktok) || 0;
-                sumAds += parseInt(c.ads) || 0;
-                sumRelasi += parseInt(c.relasi) || 0;
-            });
-
-            if (chatSourceCanvas) {
-                const chatSourceCtx = chatSourceCanvas.getContext('2d');
-                chatSourcePieChart = new Chart(chatSourceCtx, {
-                    type: 'doughnut',
-                    data: {
-                        labels: ['Instagram', 'TikTok', 'Ads', 'Relasi'],
-                        datasets: [{
-                            data: [sumIg, sumTiktok, sumAds, sumRelasi],
-                            backgroundColor: [
-                                '#C5F04A',
-                                '#112915',
-                                '#1e3b24',
-                                '#2d5a37'
-                            ],
-                            borderWidth: 2,
-                            borderColor: '#ffffff'
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: false,
-                        plugins: {
-                            legend: { position: 'right', labels: { font: { size: 11 } } },
-                            tooltip: { backgroundColor: 'rgba(0,0,0,0.8)', padding: 12, cornerRadius: 8, titleColor: '#fff', bodyColor: '#fff' }
-                        }
-                    }
-                });
+            if(document.getElementById('pctVisitFirst')) {
+                document.getElementById('pctVisitFirst').textContent = tV > 0 ? Math.round((sF/tV)*100) + '%' : '0%';
+                let barFirst = document.getElementById('barVisitFirst'); if(barFirst) barFirst.style.width = tV > 0 ? Math.round((sF/tV)*100) + '%' : '0%';
+                
+                document.getElementById('pctVisitRepeat').textContent = tV > 0 ? Math.round((sR/tV)*100) + '%' : '0%';
+                let barRepeat = document.getElementById('barVisitRepeat'); if(barRepeat) barRepeat.style.width = tV > 0 ? Math.round((sR/tV)*100) + '%' : '0%';
+                
+                document.getElementById('pctVisitLoyal').textContent = tV > 0 ? Math.round((sL/tV)*100) + '%' : '0%';
+                let barLoyal = document.getElementById('barVisitLoyal'); if(barLoyal) barLoyal.style.width = tV > 0 ? Math.round((sL/tV)*100) + '%' : '0%';
             }
-        }
+
+            const fAge = filterArr(window.ageData);
+            const sG = fAge.reduce((s, d) => s + (parseInt(d.genz) || 0), 0);
+            const sM = fAge.reduce((s, d) => s + (parseInt(d.milenial) || 0), 0);
+            const sB = fAge.reduce((s, d) => s + (parseInt(d.boomer) || 0), 0);
+            const tA = sG + sM + sB;
+
+            if(document.getElementById('pctAgeGenZ')) {
+                document.getElementById('pctAgeGenZ').textContent = tA > 0 ? Math.round((sG/tA)*100) + '%' : '0%';
+                let barGenZ = document.getElementById('barAgeGenZ'); if(barGenZ) barGenZ.style.width = tA > 0 ? Math.round((sG/tA)*100) + '%' : '0%';
+
+                document.getElementById('pctAgeMilenial').textContent = tA > 0 ? Math.round((sM/tA)*100) + '%' : '0%';
+                let barMilenial = document.getElementById('barAgeMilenial'); if(barMilenial) barMilenial.style.width = tA > 0 ? Math.round((sM/tA)*100) + '%' : '0%';
+
+                document.getElementById('pctAgeBoomer').textContent = tA > 0 ? Math.round((sB/tA)*100) + '%' : '0%';
+                let barBoomer = document.getElementById('barAgeBoomer'); if(barBoomer) barBoomer.style.width = tA > 0 ? Math.round((sB/tA)*100) + '%' : '0%';
+            }
+        };
 
         // Duplicate functions removed. Real implementations are below.
 
@@ -5023,12 +5183,15 @@
             updateDashboard();
         }
 
-        function updateDashboard() {
-            renderAvailabilityGrid();
-            renderReservationTable();
-            renderCharts();
-            renderGlobalStats(); // Update global counters
-        }
+        window.updateDashboard = function() {
+            if (typeof renderAvailabilityGrid === 'function') renderAvailabilityGrid();
+            if (typeof renderReservationTable === 'function') renderReservationTable();
+            if (typeof renderCharts === 'function') renderCharts();
+            if (typeof renderDailyTrendCharts === 'function') renderDailyTrendCharts();
+            if (typeof renderHomeStats === 'function') renderHomeStats();
+            if (typeof renderGlobalStats === 'function') renderGlobalStats();
+            if (typeof loadMenuDropdown === 'function') loadMenuDropdown();
+        };
 
         // Tambahkan variabel pengunci (Lock) di luar fungsi
         let isSubmittingRes = false;
@@ -6584,19 +6747,19 @@
 
         // --- 8. BACK OFFICE LOGIC ---
         window.toggleBackOfficeTab = function (tab) {
-            document.getElementById('bo-tab-operasional').className = (tab === 'operasional')
-                ? 'font-bold text-emerald-900 border-b-2 border-emerald-600 px-4 py-2'
-                : 'font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2';
-            document.getElementById('bo-tab-area').className = (tab === 'area')
-                ? 'font-bold text-emerald-900 border-b-2 border-emerald-600 px-4 py-2'
-                : 'font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2';
-            document.getElementById('bo-tab-menu').className = (tab === 'menu')
-                ? 'font-bold text-emerald-900 border-b-2 border-emerald-600 px-4 py-2'
-                : 'font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2';
-
-            document.getElementById('bo-section-operasional')?.classList.toggle('hidden', tab !== 'operasional');
-            document.getElementById('bo-section-area').classList.toggle('hidden', tab !== 'area');
-            document.getElementById('bo-section-menu').classList.toggle('hidden', tab !== 'menu');
+            const tabs = ['operasional', 'area', 'menu', 'analitik'];
+            tabs.forEach(t => {
+                const btn = document.getElementById('bo-tab-' + t);
+                const sec = document.getElementById('bo-section-' + t);
+                if (btn) {
+                    btn.className = (tab === t)
+                        ? 'font-bold text-emerald-900 border-b-2 border-emerald-600 px-4 py-2'
+                        : 'font-medium text-emerald-900/50 hover:text-emerald-900 px-4 py-2';
+                }
+                if (sec) {
+                    sec.classList.toggle('hidden', tab !== t);
+                }
+            });
         };
 
         window.toggleMenuTab = function (tab) {
