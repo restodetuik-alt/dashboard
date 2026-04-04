@@ -2910,7 +2910,7 @@
             if (!r.menuOrders || r.menuOrders.length === 0) return 0;
             let sub = 0;
             r.menuOrders.forEach(order => {
-                const itemData = findMenuItemData(order.item);
+                const itemData = findMenuItemData(order.item, order.category);
                 const price = itemData ? (itemData.price || 0) : 0;
                 sub += price * (parseInt(order.quantity) || 0);
             });
@@ -3517,7 +3517,7 @@
         }
 
         function renderMenuOrderItem(order, index) {
-            const itemData = findMenuItemData(order.item);
+            const itemData = findMenuItemData(order.item, order.category);
             const price = itemData ? (itemData.price || 0) : 0;
             const subtotal = price * (parseInt(order.quantity) || 0);
 
@@ -3559,7 +3559,7 @@
         }
 
         function renderMenuSubOptions(order, index) {
-            const itemData = findMenuItemData(order.item);
+            const itemData = findMenuItemData(order.item, order.category);
             const price = itemData ? (itemData.price || 0) : 0;
             const subtotal = price * (parseInt(order.quantity) || 0);
 
@@ -3679,13 +3679,20 @@
             return html;
         }
 
-        function findMenuItemData(itemName) {
-            for (const category of Object.values(menuCategories)) {
+        function findMenuItemData(itemName, categoryName = null) {
+            // Jika kategori spesifik diberikan, cari di kategori tersebut terlebih dahulu
+            if (categoryName && menuCategories[categoryName]) {
+                const found = menuCategories[categoryName].find(item => (typeof item === 'string' ? item : item.name) === itemName);
+                if (found) return typeof found === 'string' ? { name: found, category: categoryName } : { ...found, category: categoryName };
+            }
+
+            // Fallback: Cari di semua kategori (untuk kompatibilitas data lama di database)
+            for (const [catName, category] of Object.entries(menuCategories)) {
                 for (const item of category) {
                     if (typeof item === 'string') {
-                        if (item === itemName) return item;
+                        if (item === itemName) return { name: item, category: catName };
                     } else if (item.name === itemName) {
-                        return item;
+                        return { ...item, category: catName };
                     }
                 }
             }
@@ -3698,11 +3705,12 @@
         function addMenuItem(itemName, category) {
             if (!itemName) return;
 
-            const itemData = findMenuItemData(itemName);
+            const itemData = findMenuItemData(itemName, category);
             const hasOptions = itemData && typeof itemData === 'object' && itemData.options;
 
             const newOrder = {
                 item: itemName,
+                category: category,
                 quantity: 1,
                 options: hasOptions ? {} : null
             };
@@ -3862,7 +3870,7 @@
             }
 
             // Recalculate totals for UI update
-            const itemData = findMenuItemData(currentMenuOrders[index].item);
+            const itemData = findMenuItemData(currentMenuOrders[index].item, currentMenuOrders[index].category);
             if (itemData && itemData.subOptions && itemData.subOptions[subKey]) {
                 const config = itemData.subOptions[subKey];
                 const requiredTotal = config.total * (parseInt(currentMenuOrders[index].quantity) || 1);
@@ -3890,7 +3898,7 @@
             }
 
             // Recalculate totals for UI update
-            const itemData = findMenuItemData(currentMenuOrders[index].item);
+            const itemData = findMenuItemData(currentMenuOrders[index].item, currentMenuOrders[index].category);
             if (itemData && itemData.subOptions && itemData.subOptions[subKey]) {
                 const config = itemData.subOptions[subKey];
                 const requiredTotal = config.total * (parseInt(currentMenuOrders[index].quantity) || 1);
@@ -3929,7 +3937,7 @@
             currentMenuOrders.forEach((order, idx) => {
                 html += renderMenuOrderItem(order, idx);
 
-                const itemData = findMenuItemData(order.item);
+                const itemData = findMenuItemData(order.item, order.category);
                 const price = itemData ? (itemData.price || 0) : 0;
                 grandTotal += price * (parseInt(order.quantity) || 0);
             });
@@ -3952,7 +3960,7 @@
             let errorMsg = '';
 
             currentMenuOrders.forEach((order, idx) => {
-                const itemData = findMenuItemData(order.item);
+                const itemData = findMenuItemData(order.item, order.category);
 
                 // Validate sub-options (quantity distribution)
                 if (itemData && typeof itemData === 'object' && itemData.subOptions) {
@@ -4067,7 +4075,7 @@
                 content += '<p class="text-stone-400 italic">Belum ada pesanan menu.</p>';
             } else {
                 menuOrders.forEach(order => {
-                    const itemData = findMenuItemData(order.item);
+                    const itemData = findMenuItemData(order.item, order.category);
                     const price = itemData ? (itemData.price || 0) : 0;
                     const itemTotal = price * (parseInt(order.quantity) || 0);
                     subTotal += itemTotal;
@@ -5759,7 +5767,7 @@
             let itemRows = '';
 
             (menuOrders || []).forEach((order, idx) => {
-                const itemData = findMenuItemData(order.item);
+                const itemData = findMenuItemData(order.item, order.category);
                 const price = itemData ? (itemData.price || 0) : 0;
                 const itemTotal = price * (parseInt(order.quantity) || 0);
                 subTotal += itemTotal;
@@ -5921,7 +5929,7 @@
             msg += `Halo Kak *${resData.pic}*, berikut rincian pesanan menu Anda:\n\n`;
             let subTotal = 0;
             (menuOrders || []).forEach((order, idx) => {
-                const itemData = findMenuItemData(order.item);
+                const itemData = findMenuItemData(order.item, order.category);
                 const price = itemData ? (itemData.price || 0) : 0;
                 const itemTotal = price * (parseInt(order.quantity) || 0);
                 subTotal += itemTotal;
@@ -6084,7 +6092,7 @@
         function calcReservationMenuTotal(r) {
             if (!r.menuOrders || r.menuOrders.length === 0) return 0;
             let sub = r.menuOrders.reduce((s, o) => {
-                const d = findMenuItemData(o.item);
+                const d = findMenuItemData(o.item, o.category);
                 return s + (d ? (d.price || 0) : 0) * (parseInt(o.quantity) || 0);
             }, 0);
             return sub * 1.13;
@@ -6198,7 +6206,7 @@
             if (r.menuOrders && r.menuOrders.length) {
                 let kRaw = [], pRaw = [];
                 r.menuOrders.forEach(o => {
-                    const itemData = findMenuItemData(o.item);
+                    const itemData = findMenuItemData(o.item, o.category);
                     const isSpecial = itemData && typeof itemData === 'object' && itemData.fixedItems;
                     const hasSubSelections = o.subSelections && Object.keys(o.subSelections).length > 0;
 
@@ -6390,7 +6398,7 @@
 
             let kRaw = [], pRaw = [];
             (b.menuOrders || []).forEach(o => {
-                const itemData = findMenuItemData(o.item);
+                const itemData = findMenuItemData(o.item, o.category);
                 const isSpecial = itemData && typeof itemData === 'object' && itemData.fixedItems;
                 const hasSubSelections = o.subSelections && Object.keys(o.subSelections).length > 0;
 
