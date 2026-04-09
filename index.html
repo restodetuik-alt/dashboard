@@ -433,7 +433,7 @@
 
         <div id="view-landing"
             class="min-h-screen flex flex-col items-center justify-center p-6 bg-emerald-900 bg-opacity-5">
-            <div class="max-w-md w-full text-center mb-10">
+            <div class="max-w-md w-[95%] md:w-full max-h-[90vh] overflow-y-auto custom-scrollbar text-center mb-10">
                 <div
                     class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 mb-6 text-4xl">
                     🍽️
@@ -445,7 +445,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl w-full">
                 <button onclick="setAppRole('guest')"
-                    class="group relative bg-white p-8 rounded-3xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-emerald-500 transition-all duration-300 text-left overflow-hidden">
+                    class="group relative bg-white p-3 md:p-8 rounded-3xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-emerald-500 transition-all duration-300 text-left overflow-hidden">
                     <div class="text-4xl mb-4 relative z-10">👤</div>
                     <h2 class="text-2xl font-bold text-stone-800 mb-2 relative z-10">Portal Tamu</h2>
                     <p class="text-stone-500 text-sm relative z-10">Lakukan reservasi meja secara mandiri. Cek
@@ -453,7 +453,7 @@
                 </button>
 
                 <button onclick="setAppRole('login')"
-                    class="group relative bg-stone-900 p-8 rounded-3xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-emerald-400 transition-all duration-300 text-left overflow-hidden">
+                    class="group relative bg-stone-900 p-3 md:p-8 rounded-3xl shadow-sm hover:shadow-xl border-2 border-transparent hover:border-emerald-400 transition-all duration-300 text-left overflow-hidden">
                     <div class="text-4xl mb-4 relative z-10">🛡️</div>
                     <h2 class="text-2xl font-bold text-white mb-2 relative z-10">Dashboard Admin</h2>
                     <p class="text-stone-400 text-sm relative z-10">Kelola semua reservasi, atur meja, dan pantau
@@ -470,7 +470,7 @@
                 </button>
 
                 <div class="bg-white rounded-[32px] shadow-xl overflow-hidden border border-stone-100 card-jelu">
-                    <div class="bg-gradient-to-r from-emerald-800 to-emerald-600 p-10 text-white text-center">
+                    <div class="bg-gradient-to-r from-emerald-800 to-emerald-600 p-4 md:p-10 text-white text-center">
                         <h2 class="text-3xl font-bold font-serif mb-2">Reservasi Meja Mandiri</h2>
                         <p class="text-emerald-100 text-sm">Silakan lengkapi data diri dan pilih waktu kedatangan Anda.
                         </p>
@@ -576,11 +576,11 @@
 
         <!-- Navbar / Header -->
         <header id="admin-header" class="glass sticky top-0 z-50 hidden">
-            <div class="max-w-[1440px] mx-auto px-10 h-24 flex items-center justify-between">
-                <div class="flex items-center gap-6">
-                    <img id="ui-header-logo" src="" alt="Logo" class="h-12 w-auto hidden">
-                    <div class="h-10 w-px bg-emerald-900/10"></div>
-                    <h1 id="dashboard-header-title" class="text-2xl font-bold text-emerald-900 hidden lg:block">Memuat
+            <div class="max-w-[1440px] mx-auto px-4 md:px-10 h-16 md:h-24 flex items-center justify-between gap-2 md:gap-6">
+                <div class="flex items-center gap-2 md:gap-6">
+                    <img id="ui-header-logo" src="" alt="Logo" class="h-8 md:h-12 w-auto hidden">
+                    <div class="h-6 md:h-10 w-px bg-emerald-900/10"></div>
+                    <h1 id="dashboard-header-title" class="text-lg md:text-2xl font-bold text-emerald-900 hidden lg:block">Memuat
                         Sistem...</h1>
                 </div>
 
@@ -598,40 +598,41 @@
                         data-i18n="Settings">Pengaturan</button>
                 </nav>
 
-                <div class="flex items-center gap-8 text-right">
-                    <div class="hidden xl:block">
+                <div class="flex items-center justify-end gap-3 md:gap-8 text-right flex-1 md:flex-none">
+                    <!-- NOTIF BELL ICON (Pulled out to be visible on mobile) -->
+                    <div class="relative cursor-pointer" onclick="openNotif()">
+                        <span class="text-xl md:text-2xl">🔔</span>
+                        <span id="notifBadge"
+                            class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow hidden">0</span>
+                    </div>
+
+                    <div class="hidden xl:block text-left">
                         <p class="text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest">Global Status</p>
                         <div class="flex gap-4 items-center">
                             <span class="text-xs font-bold text-emerald-900"><span id="globalTotalPax">0</span>
                                 PAX</span>
                             <span class="text-xs font-bold text-emerald-900" id="globalTotalDP">Rp 0</span>
-
-                            <!-- NOTIF BELL ICON -->
-                            <div class="relative cursor-pointer ml-4" onclick="openNotif()">
-                                <span class="text-2xl">🔔</span>
-                                <span id="notifBadge"
-                                    class="absolute -top-1 -right-2 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow hidden">0</span>
-                            </div>
                         </div>
                     </div>
 
-                    <div class="flex flex-col items-end">
-                        <p class="text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest">Operational Day
-                        </p>
-                        <input type="date" id="datePicker"
-                            class="text-xs font-bold bg-emerald-900/5 px-2 py-1 rounded-lg text-emerald-900 focus:outline-none focus:ring-1 focus:ring-emerald-900/20">
+                    <div class="flex flex-col md:flex-row items-end md:items-center gap-1 md:gap-6">
+                        <div class="flex flex-col items-end">
+                            <p class="hidden md:block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest">Operational Day</p>
+                            <input type="date" id="datePicker"
+                                class="text-[10px] md:text-xs font-bold bg-emerald-900/5 px-1.5 md:px-2 py-1 rounded-lg text-emerald-900 focus:outline-none focus:ring-1 focus:ring-emerald-900/20">
+                        </div>
+
+                        <div>
+                            <button id="btnAntiGhosting" onclick="runAntiGhostingEngine()"
+                                class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-1.5 md:py-2.5 px-2 md:px-4 rounded-lg md:rounded-xl text-xs md:text-sm shadow-[0_4px_15px_-3px_rgba(245,158,11,0.5)] transition transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-1 md:gap-2 border border-orange-400/50"
+                                title="Jalankan AI Follow-Up & Reminder">
+                                <span class="text-sm md:text-lg">🤖</span>
+                                <span class="hidden md:inline tracking-wide">Auto-Follow Up</span>
+                            </button>
+                        </div>
                     </div>
 
-                    <div>
-                        <button id="btnAntiGhosting" onclick="runAntiGhostingEngine()"
-                            class="bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-white font-bold py-2.5 px-4 rounded-xl text-xs md:text-sm shadow-[0_4px_15px_-3px_rgba(245,158,11,0.5)] transition transform hover:-translate-y-0.5 active:scale-95 flex items-center gap-2 border border-orange-400/50"
-                            title="Jalankan AI Follow-Up & Reminder">
-                            <span class="text-lg">🤖</span>
-                            <span class="hidden md:inline tracking-wide">Auto-Follow Up</span>
-                        </button>
-                    </div>
-
-                    <button onclick="logout()" class="text-xs font-bold text-red-400 hover:text-red-500 transition">Log
+                    <button onclick="logout()" class="text-xs font-bold text-red-400 hover:text-red-500 transition hidden md:block">Log
                         Out</button>
                 </div>
             </div>
@@ -642,7 +643,7 @@
             <!-- VIEW: SETTINGS -->
             <div id="view-settings" class="hidden space-y-8 view-content fade-in">
                 <!-- Header -->
-                <div class="modern-card p-10 bg-emerald-900/5 border-none">
+                <div class="modern-card p-4 md:p-10 bg-emerald-900/5 border-none">
                     <h3 class="text-2xl font-bold mb-2 text-emerald-900" data-i18n="Settings">Pengaturan Global</h3>
                     <p class="text-emerald-900/40 font-medium font-bold">Kustomisasi antarmuka dan preferensi global.
                     </p>
@@ -815,7 +816,7 @@
 
                 <!-- Date Range Filter -->
                 <div
-                    class="modern-card border-none bg-emerald-900/5 p-10 flex flex-wrap items-center justify-between gap-8">
+                    class="modern-card border-none bg-emerald-900/5 p-4 md:p-10 flex flex-wrap items-center justify-between gap-8">
                     <div>
                         <h3 class="text-2xl font-bold mb-2">Pantauan Strategis</h3>
                         <p class="text-emerald-900/40 font-medium">Lihat performa reservasi dalam rentang waktu
@@ -1013,7 +1014,7 @@
             </div>
             <!-- VIEW: MENU MANAGEMENT (Jelu Theme) & BEO -->
             <div id="view-menu" class="hidden space-y-10 view-content">
-                <div class="card-jelu p-10">
+                <div class="card-jelu p-4 md:p-10">
                     <div
                         class="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 mb-10 pb-10 border-b border-emerald-900/5">
                         <div>
@@ -1039,7 +1040,7 @@
                     </div>
 
                     <!-- TABS FOR MENU & BEO -->
-                    <div class="flex gap-4 border-b border-emerald-900/10 mb-8 pb-2">
+                    <div class="overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4 border-b border-emerald-900/10 mb-8 pb-2">
                         <button id="menu-tab-order"
                             class="font-bold text-emerald-900 border-b-2 border-emerald-600 px-4 py-2"
                             onclick="toggleMenuTab('order')">Manajemen Menu</button>
@@ -1052,7 +1053,7 @@
                     <div id="menu-section-order" class="grid grid-cols-1 lg:grid-cols-4 gap-8">
                         <!-- Left Side: Selection -->
                         <div class="lg:col-span-1 space-y-6">
-                            <div class="card-jelu p-8 bg-emerald-50/30">
+                            <div class="card-jelu p-3 md:p-8 bg-emerald-50/30">
                                 <label
                                     class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-4">Pilih
                                     Reservasi</label>
@@ -1073,7 +1074,7 @@
 
                 <!-- BEO LIST SECTION -->
                 <div id="menu-section-beo" class="hidden grid grid-cols-1 gap-8">
-                    <div id="beoListSection" class="card-jelu p-8 bg-amber-50/30">
+                    <div id="beoListSection" class="card-jelu p-3 md:p-8 bg-amber-50/30">
                         <label
                             class="block text-[10px] font-bold text-amber-900/40 uppercase tracking-widest mb-4">Daftar
                             BEO</label>
@@ -1083,7 +1084,7 @@
                     </div>
 
                     <!-- BEO Create/Edit Form (Hidden by default) -->
-                    <div id="beoFormSection" class="hidden card-jelu p-10 mt-8">
+                    <div id="beoFormSection" class="hidden card-jelu p-4 md:p-10 mt-8">
                         <div class="flex justify-between items-center mb-10 pb-6 border-b border-emerald-900/5">
                             <h3 class="text-2xl font-bold text-emerald-900 font-serif">📋 Form Input BEO</h3>
                             <button onclick="closeBEOForm()"
@@ -1098,7 +1099,7 @@
                     </div>
 
                     <!-- Reservation Lookup -->
-                    <div class="bg-emerald-50/50 rounded-[32px] p-8 mb-10 border border-emerald-100">
+                    <div class="bg-emerald-50/50 rounded-[32px] p-3 md:p-8 mb-10 border border-emerald-100">
                         <h4 class="text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-6">🔍 PILIH
                             RESERVASI</h4>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -1113,7 +1114,7 @@
                         </div>
                         <!-- Auto-filled info -->
                         <div id="beoAutoInfo"
-                            class="hidden mt-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6 pt-6 border-t border-emerald-900/5">
+                            class="hidden mt-8 grid grid-cols-1 md:grid-cols-2 grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-6 pt-6 border-t border-emerald-900/5">
                             <div>
                                 <span
                                     class="text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest block mb-1">Kontak</span>
@@ -1209,7 +1210,7 @@
 
                         <!-- RIGHT COLUMN -->
                         <div class="space-y-8">
-                            <div class="bg-amber-50/50 border border-amber-100 rounded-[32px] p-8">
+                            <div class="bg-amber-50/50 border border-amber-100 rounded-[32px] p-3 md:p-8">
                                 <h4 class="text-xl font-bold text-amber-900 font-serif mb-4 flex items-center gap-2">🍽️
                                     Kitchen</h4>
                                 <div id="beoKitchenItems" class="text-sm text-amber-900/60 mb-6 italic space-y-1">Pilih
@@ -1220,7 +1221,7 @@
                                 <input type="time" id="beoKitchenTime" class="modern-input w-full bg-white">
                             </div>
 
-                            <div class="bg-blue-50/50 border border-blue-100 rounded-[32px] p-8">
+                            <div class="bg-blue-50/50 border border-blue-100 rounded-[32px] p-3 md:p-8">
                                 <h4 class="text-xl font-bold text-blue-900 font-serif mb-4 flex items-center gap-2">🥤
                                     Pantry</h4>
                                 <div id="beoPantryItems" class="text-sm text-blue-900/60 mb-6 italic space-y-1">Pilih
@@ -1231,7 +1232,7 @@
                                 <input type="time" id="beoPantryTime" class="modern-input w-full bg-white">
                             </div>
 
-                            <div class="grid grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div>
                                     <label
                                         class="px-2 text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 block">Engineering</label>
@@ -1247,7 +1248,7 @@
                             </div>
 
                             <!-- Cashier Summary -->
-                            <div class="bg-emerald-900 text-white rounded-[32px] p-8 shadow-xl shadow-emerald-900/20">
+                            <div class="bg-emerald-900 text-white rounded-[32px] p-3 md:p-8 shadow-xl shadow-emerald-900/20">
                                 <h4 class="text-lg font-bold mb-6 flex items-center gap-2">💰 Cashier Summary</h4>
                                 <div class="space-y-4">
                                     <div
@@ -1341,7 +1342,7 @@
                     </div>
 
                     <!-- Table -->
-                    <div class="overflow-x-auto">
+                    <div class="overflow-x-auto relative after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-emerald-900/5 after:to-transparent after:pointer-events-none md:after:hidden">
                         <table class="w-full text-left border-collapse">
                             <thead>
                                 <tr>
@@ -1362,12 +1363,12 @@
                 </div>
 
                 <!-- Monitor Ketersediaan Area (MOVED BOTTOM) -->
-                <div class="card-jelu p-10 mt-8">
+                <div class="card-jelu p-4 md:p-10 mt-8">
                     <div class="mb-10">
                         <h3 class="text-3xl font-bold text-emerald-900 font-serif">Ketersediaan Real-Time</h3>
                         <p id="availabilityHourLabelRes" class="text-emerald-900/40 font-medium italic"></p>
                     </div>
-                    <div id="availabilityGridRes" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+                    <div id="availabilityGridRes" class="grid grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
                         <!-- Populated by JS -->
                     </div>
                 </div>
@@ -1376,13 +1377,13 @@
             <!-- VIEW: BACK OFFICE -->
             <div id="view-backoffice" class="hidden space-y-8 view-content">
                 <div
-                    class="bg-white rounded-[32px] shadow-sm ring-1 ring-emerald-900/5 overflow-hidden card-jelu p-8 lg:p-10">
+                    class="bg-white rounded-[32px] shadow-sm ring-1 ring-emerald-900/5 overflow-hidden card-jelu p-3 md:p-8 lg:p-10">
                     <h3 class="text-4xl font-bold text-emerald-900 font-serif mb-2">Back Office</h3>
                     <p class="text-emerald-900/60 font-medium mb-8">Kelola Data Area dan Menu (Tersimpan di Browser).
                     </p>
 
                     <!-- Back Office Tabs -->
-                    <div class="flex gap-4 border-b border-emerald-900/10 mb-8 pb-4">
+                    <div class="overflow-x-auto whitespace-nowrap scrollbar-hide flex gap-4 border-b border-emerald-900/10 mb-8 pb-4">
 
                         <button onclick="toggleBackOfficeTab('operasional')" id="bo-tab-operasional"
                             class="font-bold text-emerald-900 border-b-2 border-emerald-600 px-4 py-2">Input
@@ -1511,7 +1512,7 @@
                             <h4 class="text-xl font-bold text-emerald-900">Kelola Area</h4>
                             <button onclick="openAreaModal()" class="btn-primary">➕ Tambah Area</button>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto relative after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-emerald-900/5 after:to-transparent after:pointer-events-none md:after:hidden">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr>
@@ -1541,7 +1542,7 @@
                                     Menu</button>
                             </div>
                         </div>
-                        <div class="overflow-x-auto">
+                        <div class="overflow-x-auto relative after:absolute after:inset-y-0 after:right-0 after:w-8 after:bg-gradient-to-l after:from-emerald-900/5 after:to-transparent after:pointer-events-none md:after:hidden">
                             <table class="w-full text-left border-collapse">
                                 <thead>
                                     <tr>
@@ -1565,7 +1566,7 @@
     <!-- Modal Form for Adding Reservation -->
     <div id="reservationModal"
         class="fixed inset-0 bg-emerald-900/60 backdrop-blur-sm hidden z-[60] flex items-center justify-center p-4">
-        <div class="modern-card w-full max-w-2xl max-h-[90vh] overflow-y-auto p-0 border-none shadow-2xl">
+        <div class="modern-card w-[95%] md:w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar p-0 border-none shadow-2xl">
             <div
                 class="px-10 py-8 border-b border-emerald-900/5 flex justify-between items-center sticky top-0 bg-white z-10">
                 <h3 id="modalTitle" class="text-3xl font-bold">Rencana Reservasi</h3>
@@ -1703,7 +1704,7 @@
     <div id="menuDetailModal"
         class="fixed inset-0 bg-stone-900/80 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm -webkit-backdrop-filter">
         <div
-            class="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden relative">
+            class="bg-white rounded-2xl shadow-2xl w-[95%] md:w-full max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar max-h-[90vh] flex flex-col overflow-hidden relative">
             <div
                 class="p-6 border-b border-stone-100 flex justify-between items-center bg-white sticky top-0 z-10 shrink-0">
                 <h3 class="text-xl font-bold font-serif text-emerald-900">Detail Pesanan Menu</h3>
@@ -1739,7 +1740,7 @@
     <!-- Chat Data Input Modal -->
     <div id="chatDataModal"
         class="fixed inset-0 bg-stone-900/80 hidden z-50 flex items-center justify-center p-4 backdrop-blur-sm -webkit-backdrop-filter">
-        <div class="bg-white rounded-[32px] shadow-2xl w-full max-w-lg p-10 relative overflow-hidden">
+        <div class="bg-white rounded-[32px] shadow-2xl w-full max-w-lg p-4 md:p-10 relative overflow-hidden">
             <h2 class="text-3xl font-bold font-serif text-emerald-900 mb-2">Input Data Chat</h2>
             <p class="text-emerald-900/40 text-sm font-medium mb-8">Rekam jumlah interaksi chat harian dari berbagai
                 sumber platform.</p>
@@ -1751,7 +1752,7 @@
                     <input type="date" id="chatDateInput" title="Tanggal Chat" required class="modern-input w-full">
                 </div>
 
-                <div class="grid grid-cols-2 gap-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
                         <label
                             class="block text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-2 px-1">Instagram</label>
@@ -1789,7 +1790,7 @@
     <!-- Download Data Modal -->
     <div id="downloadModal"
         class="fixed inset-0 bg-stone-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-[95%] md:w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="p-6 border-b border-stone-200 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-stone-900">📥 Unduh Data Tamu</h3>
                 <button onclick="closeDownloadModal()"
@@ -1850,7 +1851,7 @@
     <!-- Back Office Area Modal -->
     <div id="boAreaModal"
         class="fixed inset-0 bg-stone-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-[95%] md:w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="p-6 border-b border-stone-200 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-stone-900" id="boAreaModalTitle">Tambah Area</h3>
                 <button onclick="closeAreaModal()"
@@ -1868,7 +1869,7 @@
                     <input type="text" id="boAreaName" required class="modern-input w-full"
                         placeholder="Contoh: Saung Utama">
                 </div>
-                <div class="grid grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block mb-2 text-sm font-medium text-stone-900">Kapasitas</label>
                         <input type="number" id="boAreaCapacity" required class="modern-input w-full" min="1" value="1">
@@ -1896,7 +1897,7 @@
     <!-- Back Office Menu Modal -->
     <div id="boMenuModal"
         class="fixed inset-0 bg-stone-900 bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-[95%] md:w-full max-h-[90vh] overflow-y-auto custom-scrollbar">
             <div class="p-6 border-b border-stone-200 flex justify-between items-center">
                 <h3 class="text-lg font-bold text-stone-900" id="boMenuModalTitle">Tambah Menu</h3>
                 <button onclick="closeMenuModal()"
@@ -3643,7 +3644,7 @@
             currentMenuOrders = Array.isArray(resData.menuOrders) ? JSON.parse(JSON.stringify(resData.menuOrders)) : [];
 
             let html = `
-                <div class="card-jelu p-10 space-y-10">
+                <div class="card-jelu p-4 md:p-10 space-y-10">
                     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-emerald-900/5 pb-10">
                         <div>
                             <span class="text-[10px] font-bold text-emerald-900/40 uppercase tracking-widest mb-1">${resData.date}</span>
@@ -3659,7 +3660,7 @@
                         ${currentMenuOrders.map((order, idx) => renderMenuOrderItem(order, idx)).join('')}
                     </div>
 
-                    <div class="bg-emerald-50 rounded-[32px] p-10 border border-emerald-100">
+                    <div class="bg-emerald-50 rounded-[32px] p-4 md:p-10 border border-emerald-100">
                         <div class="mb-8">
                             <h4 class="text-2xl font-bold text-emerald-900 mb-1">Tambah Item Baru</h4>
                             <p class="text-emerald-900/40 text-sm font-medium">Pilih kategori dan menu untuk ditambahkan ke daftar.</p>
@@ -3772,7 +3773,7 @@
                                     ${remainingText}
                                 </span>
                             </div>
-                            <div class="space-y-2 grid grid-cols-2 gap-2" id="subOption_${index}_${subKey}">`;
+                            <div class="space-y-2 grid grid-cols-1 md:grid-cols-2 gap-2" id="subOption_${index}_${subKey}">`;
 
                     choices.forEach(choice => {
                         // Find existing qty for this choice
@@ -6899,7 +6900,7 @@
                 div.className = 'p-3 bg-stone-50 border border-stone-200 rounded-lg space-y-3 relative';
                 div.innerHTML = `
                     <button type="button" onclick="removeBoMenuModifier(${idx})" class="absolute top-2 right-2 text-red-400 hover:text-red-600 font-bold px-1">&times;</button>
-                    <div class="grid grid-cols-2 gap-3 pr-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 pr-6">
                         <div>
                             <label class="block text-[10px] font-bold text-stone-500 uppercase tracking-wider mb-1">Nama Modifier</label>
                             <input type="text" class="modern-input w-full text-xs" value="${mod.label}" onchange="updateBoModifier(${idx}, 'label', this.value)" placeholder="Misal: Tingkat Kepedasan">
@@ -7260,6 +7261,33 @@
             background: #a8a29e;
         }
     </style>
+
+<!-- Mobile Bottom Navigation -->
+<div class='fixed bottom-0 left-0 right-0 glass border-t border-emerald-900/10 z-[100] block md:hidden backdrop-blur-md pb-safe'>
+    <div class='flex justify-around items-center h-16 px-2'>
+        <button onclick='switchView("home")' class='flex flex-col items-center justify-center w-full h-full text-emerald-900/50 hover:text-emerald-700 transition active:scale-95'>
+            <span class='text-xl mb-1'>🏠</span>
+            <span class='text-[9px] font-bold'>Home</span>
+        </button>
+        <button onclick='switchView("reservation")' class='flex flex-col items-center justify-center w-full h-full text-emerald-900/50 hover:text-emerald-700 transition active:scale-95'>
+            <span class='text-xl mb-1'>📅</span>
+            <span class='text-[9px] font-bold'>Reservasi</span>
+        </button>
+        <button onclick='switchView("menu")' class='flex flex-col items-center justify-center w-full h-full text-emerald-900/50 hover:text-emerald-700 transition active:scale-95'>
+            <span class='text-xl mb-1'>📋</span>
+            <span class='text-[9px] font-bold'>Menu</span>
+        </button>
+        <button onclick='switchView("backoffice")' class='flex flex-col items-center justify-center w-full h-full text-emerald-900/50 hover:text-emerald-700 transition active:scale-95'>
+            <span class='text-xl mb-1'>💼</span>
+            <span class='text-[9px] font-bold'>Office</span>
+        </button>
+        <button onclick='switchView("settings")' class='flex flex-col items-center justify-center w-full h-full text-emerald-900/50 hover:text-emerald-700 transition active:scale-95'>
+            <span class='text-xl mb-1'>⚙️</span>
+            <span class='text-[9px] font-bold'>Settings</span>
+        </button>
+    </div>
+</div>
+
 </body>
 
 </html>
